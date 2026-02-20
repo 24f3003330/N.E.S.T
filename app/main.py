@@ -36,7 +36,7 @@ app = FastAPI(
 )
 
 # ── Session middleware (required for OAuth state) ──
-app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY, https_only=False)
+app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY, https_only=not settings.DEBUG)
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=("*",))
 
 # ── Static files & templates ──

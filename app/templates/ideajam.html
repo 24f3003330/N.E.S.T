@@ -195,8 +195,8 @@
             </p>
         </div>
         <div>
-            <span class="badge bg-{{ 'info' if jam.status.value == 'Active' else 'secondary' }} fs-6">
-                {{ jam.status.value }}
+            <span class="badge bg-{{ 'info' if jam_status_str == 'Active' else 'secondary' }} fs-6">
+                {{ jam_status_str }}
             </span>
         </div>
     </div>
@@ -329,7 +329,7 @@
         const surveySubmitBtn = document.getElementById("surveySubmitBtn");
         const submitBtn = document.getElementById("submitBtn");
 
-        let isActive = "{{ jam.status.value }}" === "Active";
+        let isActive = "{{ jam_status_str }}" === "Active";
         let hasSubmittedSurvey = "{{ has_submitted_survey }}" === "True";
 
         /* ── Character counter ── */

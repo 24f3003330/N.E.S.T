@@ -50,11 +50,32 @@
             </form>
             {% endif %}
 
-            <!-- Non-members: Request to Join -->
+            <!-- Non-members: Respond to Invite or Request to Join -->
             {% if current_user and not user_role %}
+
+            {% if my_pending_invite %}
+            <!-- User was invited by the lead -->
+            <div class="d-inline-flex align-items-center gap-2 me-2">
+                <span class="text-warning small fw-bold me-2"><i class="bi bi-envelope-paper me-1"></i>You were
+                    invited!</span>
+                <form action="/teams/invitation/{{ my_pending_invite.id }}/respond" method="POST" class="d-inline">
+                    <input type="hidden" name="action" value="accept">
+                    <button type="submit" class="btn btn-success btn-sm btn-glow"><i
+                            class="bi bi-check-circle me-1"></i>Accept</button>
+                </form>
+                <form action="/teams/invitation/{{ my_pending_invite.id }}/respond" method="POST" class="d-inline">
+                    <input type="hidden" name="action" value="decline">
+                    <button type="submit" class="btn btn-outline-danger btn-sm"><i
+                            class="bi bi-x-circle me-1"></i>Decline</button>
+                </form>
+            </div>
+            {% else %}
+            <!-- User has no pending invite, can request to join -->
             <button class="btn btn-primary btn-glow" data-bs-toggle="modal" data-bs-target="#requestJoinModal">
                 <i class="bi bi-person-plus me-1"></i>Request to Join
             </button>
+            {% endif %}
+
             {% endif %}
 
             <!-- Members (not lead): Leave Team -->
@@ -259,10 +280,10 @@
                     </div>
                 </form>
 
-                {% if pending_invites %}
+                {% if pending_requests %}
                 <h6 class="fw-bold fs-7 mb-2">Pending Requests</h6>
                 <div class="list-group list-group-flush mb-0">
-                    {% for inv, usr in pending_invites %}
+                    {% for inv, usr in pending_requests %}
                     <div class="list-group-item bg-transparent px-0 border-secondary border-opacity-25">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <strong class="small">{{ usr.full_name }}</strong>
@@ -282,8 +303,28 @@
                         {% if inv.message %}
                         <div class="small text-secondary fst-italic">"{{ inv.message }}"</div>
                         {% endif %}
-                        <div class="small text-muted" style="font-size: 0.7rem;">{% if inv.direction.value == 'Request'
-                            %}Requested to join{% else %}You invited{% endif %}</div>
+                        <div class="small text-muted" style="font-size: 0.7rem;">Requested to join</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if pending_sent_invites %}
+                <h6 class="fw-bold fs-7 mb-2 mt-4">Sent Invitations</h6>
+                <div class="list-group list-group-flush mb-0">
+                    {% for inv, usr in pending_sent_invites %}
+                    <div class="list-group-item bg-transparent px-0 border-secondary border-opacity-25">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <strong class="small">{{ usr.full_name }}</strong>
+                            <div class="d-flex gap-1">
+                                <form action="/teams/invitation/{{ inv.id }}/respond" method="POST" class="d-inline">
+                                    <input type="hidden" name="action" value="decline">
+                                    <button class="btn btn-sm btn-outline-danger py-0 px-2" title="Revoke Invite"><i
+                                            class="bi bi-x"></i> Revoke</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="small text-muted" style="font-size: 0.7rem;">Invited via email</div>
                     </div>
                     {% endfor %}
                 </div>

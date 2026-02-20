@@ -32,11 +32,34 @@ async def list_teams(
     db: AsyncSession = Depends(get_db),
 ):
     """List all teams."""
+    # 1. Fetch Forming teams for discovery
     result = await db.execute(select(Team).where(Team.status == TeamStatus.Forming))
-    teams = result.scalars().all()
+    discover_teams = result.scalars().all()
+
+    # 2. Fetch My Teams
+    my_teams = []
+    if current_user:
+        res_mine = await db.execute(
+            select(Team)
+            .join(TeamMembership, Team.id == TeamMembership.team_id)
+            .where(
+                TeamMembership.user_id == current_user.id,
+                TeamMembership.left_at.is_(None)
+            )
+        )
+        my_teams = res_mine.scalars().all()
+        # Remove My Teams from Discover Teams
+        my_team_ids = {t.id for t in my_teams}
+        discover_teams = [t for t in discover_teams if t.id not in my_team_ids]
+
     return templates.TemplateResponse(
         "teams_list.html",
-        {"request": request, "teams": teams, "current_user": current_user},
+        {
+            "request": request, 
+            "discover_teams": discover_teams, 
+            "my_teams": my_teams,
+            "current_user": current_user
+        },
     )
 
 
@@ -145,16 +168,45 @@ async def team_detail(
     )
     members = members_result.all()  # List of tuples (TeamMembership, User)
 
-    # Fetch pending invitations
+    # Fetch pending invitations (both requests to join AND invites sent to the current user)
+    # We fetch all pending invitations for this team
     invites_result = await db.execute(
-        select(TeamInvitation, User)
-        .join(User, TeamInvitation.from_user_id == User.id)
+        select(TeamInvitation)
         .where(
             TeamInvitation.team_id == team_id,
             TeamInvitation.status == InvitationStatus.Pending
         )
     )
-    pending_invites = invites_result.all()
+    all_pending_invites = invites_result.scalars().all()
+
+    # Split them up for the template
+    pending_requests = []
+    pending_sent_invites = []
+    my_pending_invite = None
+    
+    if all_pending_invites:
+        # For requests, we need the User info of the requester (from_user_id)
+        requester_ids = [inv.from_user_id for inv in all_pending_invites if getattr(inv.direction, 'value', inv.direction) == "Request"]
+        
+        # For sent invites, we need the User info of the invitee (to_user_id)
+        invitee_ids = [inv.to_user_id for inv in all_pending_invites if getattr(inv.direction, 'value', inv.direction) == "Invite"]
+
+        user_lookup = {}
+        all_needed_users = list(set(requester_ids + invitee_ids))
+        if all_needed_users:
+            req_users = await db.execute(select(User).where(User.id.in_(all_needed_users)))
+            user_lookup = {u.id: u for u in req_users.scalars().all()}
+            
+        for inv in all_pending_invites:
+            inv_dir = getattr(inv.direction, 'value', inv.direction)
+            if inv_dir == "Request":
+                if inv.from_user_id in user_lookup:
+                    pending_requests.append((inv, user_lookup[inv.from_user_id]))
+            elif inv_dir == "Invite":
+                if current_user and inv.to_user_id == current_user.id:
+                    my_pending_invite = inv
+                if inv.to_user_id in user_lookup:
+                    pending_sent_invites.append((inv, user_lookup[inv.to_user_id]))
 
     # Determine the current user's role on the team
     user_role = None
@@ -191,7 +243,9 @@ async def team_detail(
             "hackathon_title": hackathon_title,
             "project_title": project_title,
             "members": members,
-            "pending_invites": pending_invites,
+            "pending_requests": pending_requests,
+            "pending_sent_invites": pending_sent_invites,
+            "my_pending_invite": my_pending_invite,
             "user_role": user_role,
             "pending_evals": pending_evals,
         },
@@ -318,33 +372,78 @@ async def respond_invitation(
     if not inv:
         raise HTTPException(status_code=404, detail="Invitation not found.")
 
-    # Only to_user_id can respond
-    if inv.to_user_id != current_user.id:
+    team_result = await db.execute(select(Team).where(Team.id == inv.team_id))
+    team = team_result.scalar_one_or_none()
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found.")
+
+    # Only to_user_id can respond, OR the sender can decline (revoke)
+    is_recipient = (inv.to_user_id == current_user.id)
+    is_sender = (inv.from_user_id == current_user.id)
+    
+    if not (is_recipient or (is_sender and action == "decline")):
         raise HTTPException(status_code=403, detail="Not authorized to respond to this invitation.")
 
     if action == "accept":
         inv.status = InvitationStatus.Accepted
         # Determine who is the new member
-        new_member_id = inv.to_user_id if inv.direction == InvitationDirection.Invite else inv.from_user_id
-        membership = TeamMembership(team_id=inv.team_id, user_id=new_member_id)
-        db.add(membership)
+        inv_dir = getattr(inv.direction, 'value', inv.direction)
+        new_member_id = inv.to_user_id if inv_dir == "Invite" else inv.from_user_id
+        
+        # Check if they are already on the team to prevent duplicates
+        mem_check = await db.execute(
+            select(TeamMembership).where(
+                TeamMembership.team_id == inv.team_id,
+                TeamMembership.user_id == new_member_id,
+                TeamMembership.left_at.is_(None)
+            )
+        )
+        if not mem_check.scalar_one_or_none():
+            # Check team size limit
+            current_members_result = await db.execute(
+                select(func.count(TeamMembership.id)).where(
+                    TeamMembership.team_id == inv.team_id,
+                    TeamMembership.left_at.is_(None)
+                )
+            )
+            current_count = current_members_result.scalar() or 0
+            if team.max_size and current_count >= team.max_size:
+                raise HTTPException(status_code=400, detail="Team is already at maximum capacity.")
+                
+            membership = TeamMembership(team_id=inv.team_id, user_id=new_member_id)
+            db.add(membership)
     elif action == "decline":
         inv.status = InvitationStatus.Declined
 
     # ── Notify the other party about the response ──
     from app.models.notification import Notification
-    other_user_id = inv.from_user_id  # person who sent the invite/request
+    
     team_result2 = await db.execute(select(Team).where(Team.id == inv.team_id))
     team_for_notif = team_result2.scalar_one_or_none()
     team_name = team_for_notif.name if team_for_notif else "the team"
-    action_word = "accepted" if action == "accept" else "declined"
-    emoji = "✅" if action == "accept" else "❌"
-    notif = Notification(
-        user_id=other_user_id,
-        message=f"{emoji} {current_user.full_name} {action_word} your request for <b>{team_name}</b>",
-        link=f"/teams/{inv.team_id}",
-    )
-    db.add(notif)
+    
+    if is_recipient:
+        # The recipient responded (accepted or declined).
+        # Notify the sender.
+        other_user_id = inv.from_user_id
+        action_word = "accepted" if action == "accept" else "declined"
+        emoji = "✅" if action == "accept" else "❌"
+        notif = Notification(
+            user_id=other_user_id,
+            message=f"{emoji} {current_user.full_name} {action_word} your request/invite for <b>{team_name}</b>",
+            link=f"/teams/{inv.team_id}",
+        )
+        db.add(notif)
+    elif is_sender and action == "decline":
+        # The sender revoked their invite/request.
+        # Notify the recipient.
+        other_user_id = inv.to_user_id
+        notif = Notification(
+            user_id=other_user_id,
+            message=f"❌ {current_user.full_name} revoked their request/invite for <b>{team_name}</b>",
+            link=f"/teams/{inv.team_id}",
+        )
+        db.add(notif)
 
     await db.commit()
     return RedirectResponse(url=f"/teams/{inv.team_id}", status_code=status.HTTP_303_SEE_OTHER)

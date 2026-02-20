@@ -107,7 +107,8 @@ async def jam_page(
 
     # Auto-complete if time is up
     now = datetime.utcnow()
-    if jam.status == JamStatus.Active and now >= jam.ends_at:
+    status_val = getattr(jam.status, 'value', jam.status)
+    if status_val == "Active" and now >= jam.ends_at:
         jam.status = JamStatus.Completed
         await db.commit()
 
@@ -118,7 +119,8 @@ async def jam_page(
     # Survey checks
     has_submitted_survey = False
     teammates = []
-    if jam.status == JamStatus.Completed:
+    status_val = getattr(jam.status, 'value', jam.status)
+    if status_val == "Completed":
         # Check if already submitted
         survey_res = await db.execute(select(JamSurvey).where(
             JamSurvey.jam_id == jam_id,
@@ -145,6 +147,7 @@ async def jam_page(
             "request": request,
             "current_user": current_user,
             "jam": jam,
+            "jam_status_str": getattr(jam.status, "value", jam.status),
             "team": team,
             "ends_at_iso": jam.ends_at.isoformat() + "Z",
             "has_submitted_survey": has_submitted_survey,
@@ -169,8 +172,9 @@ async def get_entries(
 
     # Auto-complete if expired
     now = datetime.utcnow()
-    is_active = jam.status == JamStatus.Active and now < jam.ends_at
-    if jam.status == JamStatus.Active and now >= jam.ends_at:
+    status_val = getattr(jam.status, 'value', jam.status)
+    is_active = status_val == "Active" and now < jam.ends_at
+    if status_val == "Active" and now >= jam.ends_at:
         jam.status = JamStatus.Completed
         await db.commit()
         is_active = False
@@ -215,7 +219,8 @@ async def submit_idea(
 
     # Check jam is still active
     now = datetime.utcnow()
-    if jam.status != JamStatus.Active or now >= jam.ends_at:
+    status_val = getattr(jam.status, 'value', jam.status)
+    if status_val != "Active" or now >= jam.ends_at:
         raise HTTPException(status_code=400, detail="This Idea Jam has ended")
 
     # Check membership
@@ -329,6 +334,7 @@ async def results_page(
             "request": request,
             "current_user": current_user,
             "jam": jam,
+            "jam_status_str": getattr(jam.status, "value", jam.status),
             "team": team,
             "ends_at_iso": jam.ends_at.isoformat() + "Z",
             "has_submitted_survey": has_submitted_survey,
@@ -364,7 +370,8 @@ async def submit_jam_survey(
     if not jam:
         raise HTTPException(status_code=404, detail="Jam not found")
 
-    if jam.status != JamStatus.Completed:
+    status_val = getattr(jam.status, 'value', jam.status)
+    if status_val != "Completed":
         raise HTTPException(status_code=400, detail="Survey can only be filled out after the jam is completed.")
 
     # Check if a survey already exists
@@ -408,7 +415,8 @@ async def finalize_team(
     if not jam:
         raise HTTPException(status_code=404, detail="Jam not found")
         
-    if jam.status != JamStatus.Completed:
+    status_val = getattr(jam.status, 'value', jam.status)
+    if status_val != "Completed":
         raise HTTPException(status_code=400, detail="Jam must be completed to finalize.")
 
     # 2. Fetch Team and verify Lead
