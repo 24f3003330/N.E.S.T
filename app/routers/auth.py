@@ -209,8 +209,17 @@ async def oauth_callback(
     if provider not in VALID_PROVIDERS:
         raise HTTPException(status_code=400, detail=f"Unknown provider: {provider}")
 
-    client = oauth.create_client(provider)
-    token = await client.authorize_access_token(request)
+    try:
+        client = oauth.create_client(provider)
+        token = await client.authorize_access_token(request)
+    except Exception as e:
+        return templates.TemplateResponse(
+            "login.html",
+            {
+                "request": request,
+                "errors": [f"Authentication failed: {str(e)}"],
+            },
+        )
 
     user_info = await _get_oauth_user_info(provider, token, client)
     email = user_info.get("email")

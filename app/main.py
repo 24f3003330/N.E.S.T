@@ -11,6 +11,7 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from app.config import settings
 from app.database import Base, engine
@@ -35,7 +36,8 @@ app = FastAPI(
 )
 
 # ── Session middleware (required for OAuth state) ──
-app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
+app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY, https_only=False)
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=("*",))
 
 # ── Static files & templates ──
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
