@@ -386,18 +386,19 @@ async def respond_invitation(
 
     if action == "accept":
         try:
-            inv.status = "Accepted"
+            inv.status = InvitationStatus.Accepted
             inv_dir = str(getattr(inv.direction, 'value', inv.direction))
             new_member_id = inv.to_user_id if inv_dir == "Invite" else inv.from_user_id
             
             mem_check = await db.execute(
                 select(TeamMembership).where(
                     TeamMembership.team_id == inv.team_id,
-                    TeamMembership.user_id == new_member_id,
-                    TeamMembership.left_at.is_(None)
+                    TeamMembership.user_id == new_member_id
                 )
             )
-            if not mem_check.scalar_one_or_none():
+            existing_mem = mem_check.scalar_one_or_none()
+            
+            if not (existing_mem and existing_mem.left_at is None):
                 current_members_result = await db.execute(
                     select(func.count(TeamMembership.user_id)).where(
                         TeamMembership.team_id == inv.team_id,
@@ -408,8 +409,12 @@ async def respond_invitation(
                 if team.max_size is not None and current_count >= team.max_size:
                     raise HTTPException(status_code=400, detail="Team is already at maximum capacity.")
                     
-                membership = TeamMembership(team_id=inv.team_id, user_id=new_member_id, role="Member")
-                db.add(membership)
+                if existing_mem:
+                    existing_mem.left_at = None
+                    existing_mem.joined_at = func.now()
+                else:
+                    membership = TeamMembership(team_id=inv.team_id, user_id=new_member_id, role=Role.Member)
+                    db.add(membership)
                 
             from app.models.notification import Notification
             team_result2 = await db.execute(select(Team).where(Team.id == inv.team_id))
@@ -432,7 +437,7 @@ async def respond_invitation(
 
     elif action == "decline":
         try:
-            inv.status = "Declined"
+            inv.status = InvitationStatus.Declined
             
             from app.models.notification import Notification
             team_result2 = await db.execute(select(Team).where(Team.id == inv.team_id))
