@@ -42,7 +42,7 @@ def _group_capabilities(capabilities: List[Capability]) -> Dict[str, List[Capabi
     """Group a list of capabilities by their category value."""
     grouped: Dict[str, List[Capability]] = {}
     for cap in capabilities:
-        key = cap.category.value  # e.g. "Technical"
+        key = getattr(cap.category, 'value', cap.category)  # e.g. "Technical"
         grouped.setdefault(key, []).append(cap)
     return grouped
 

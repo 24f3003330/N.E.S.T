@@ -230,7 +230,7 @@ async def create_hackathon(
         tags_json=json.dumps(tags_list),
     )
     db.add(hackathon)
-    await db.flush()
+    await db.commit()
 
     return RedirectResponse(
         url="/hackathons/dashboard?success=Hackathon+created",
@@ -330,7 +330,7 @@ async def create_project(
         required_capabilities_json=json.dumps(caps_list),
     )
     db.add(project)
-    await db.flush()
+    await db.commit()
 
     return RedirectResponse(
         url="/hackathons/dashboard?success=Project+created",

@@ -36,7 +36,7 @@ async def match_dashboard(
     
     # Fetch forming teams of which current_user is the Lead
     my_teams = []
-    if current_user.account_type.value == "Leader":
+    if getattr(current_user.account_type, 'value', current_user.account_type) == "Leader":
         res_t = await db.execute(
             select(Team).where(Team.lead_id == current_user.id)
         )

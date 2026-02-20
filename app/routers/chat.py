@@ -242,7 +242,7 @@ async def process_bot_command(command_text: str, room_id: int, team_id: int) -> 
             # Just calculating an arbitrary "Team Completeness Data Map" based on required roles, 
             # or listing what archetypes are missing. For simplicity, we just list the vibe composition.
             active_users = active_mems
-            archetypes_present = {u.archetype.value for u in active_users if u.archetype}
+            archetypes_present = {getattr(u.archetype, 'value', u.archetype) for u in active_users if u.archetype}
             
             all_archetypes = {"Builder", "Designer", "Researcher", "Communicator", "Strategist"}
             missing = all_archetypes - archetypes_present

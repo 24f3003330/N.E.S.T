@@ -87,7 +87,7 @@ async def graph_data(db: AsyncSession = Depends(get_db)):
         nodes.append({
             "id": user.id,
             "name": user.full_name,
-            "archetype": user.archetype.value if user.archetype else "Unknown",
+            "archetype": getattr(user.archetype, 'value', user.archetype) if user.archetype else "Unknown",
             "department": user.department or "Unknown",
             "capabilities": user_caps.get(user.id, [])[:5],
             "capability_count": len(user_caps.get(user.id, [])),
