@@ -401,7 +401,7 @@ async def respond_invitation(
         if not mem_check.scalar_one_or_none():
             # Check team size limit
             current_members_result = await db.execute(
-                select(func.count(TeamMembership.id)).where(
+                select(func.count(TeamMembership.user_id)).where(
                     TeamMembership.team_id == inv.team_id,
                     TeamMembership.left_at.is_(None)
                 )
