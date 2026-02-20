@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — N.E.S.T{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0"><i class="bi bi-grid-1x2-fill me-2 text-primary"></i>Opportunities</h2>
+    {% if current_user and current_user.account_type.value == 'Leader' %}
+    <div class="d-flex gap-2">
+        <a href="/hackathons/create" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle me-1"></i>New Hackathon
+        </a>
+        <a href="/hackathons/projects/create" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-plus-circle me-1"></i>New Project
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- ═══ Success banner ═══ -->
+{% if request.query_params.get('success') %}
+<div class="alert alert-success alert-dismissible fade show" role="alert">
+    {{ request.query_params.get('success') }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endif %}
+
+<!-- ═══ Filter Bar ═══ -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body py-3">
+        <form method="get" action="/hackathons/dashboard" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Status</label>
+                <select name="status_filter" class="form-select form-select-sm">
+                    <option value="">All Statuses</option>
+                    {% for s in statuses %}
+                    <option value="{{ s }}" {% if status_filter==s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                    {% for s in project_statuses %}
+                    {% if s not in statuses %}
+                    <option value="{{ s }}" {% if status_filter==s %}selected{% endif %}>{{ s }}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label small fw-semibold">Required Capability</label>
+                <input type="text" name="cap_filter" class="form-control form-control-sm"
+                    placeholder="e.g. Python, React, ML…" value="{{ cap_filter }}">
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm flex-fill">
+                    <i class="bi bi-funnel me-1"></i>Filter
+                </button>
+                <a href="/hackathons/dashboard" class="btn btn-outline-secondary btn-sm">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ═══ Tabs ═══ -->
+<ul class="nav nav-tabs mb-4" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#hackathons-tab" type="button">
+            <i class="bi bi-trophy me-1"></i>Hackathons
+            <span class="badge bg-primary ms-1">{{ hackathons | length }}</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#projects-tab" type="button">
+            <i class="bi bi-kanban me-1"></i>Projects
+            <span class="badge bg-primary ms-1">{{ projects | length }}</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#unstop-tab" type="button">
+            <i class="bi bi-globe me-1"></i>Unstop
+            <span class="badge bg-info text-dark ms-1">{{ unstop_events | length }}</span>
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+
+    <!-- ═══ Hackathons Tab ═══ -->
+    <div class="tab-pane fade show active" id="hackathons-tab" role="tabpanel">
+        {% if hackathons %}
+        <div class="row g-3">
+            {% for h in hackathons %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body d-flex flex-column">
+                        <!-- Status badge -->
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span
+                                class="badge {% if h.status.value == 'Upcoming' %}bg-info{% elif h.status.value == 'Active' %}bg-success{% else %}bg-secondary{% endif %}">
+                                {{ h.status.value }}
+                            </span>
+                            <small class="text-secondary">
+                                <i class="bi bi-people-fill me-1"></i>
+                                {{ hack_team_counts.get(h.id, {}).get('members', 0) }} joined
+                            </small>
+                        </div>
+
+                        <h5 class="card-title mb-1">
+                            <a href="/hackathons/{{ h.id }}" class="text-decoration-none">{{ h.title }}</a>
+                        </h5>
+
+                        {% if h.organizer %}
+                        <small class="text-secondary mb-2">
+                            <i class="bi bi-building me-1"></i>{{ h.organizer }}
+                        </small>
+                        {% endif %}
+
+                        {% if h.description %}
+                        <p class="text-secondary small mb-2">{{ h.description[:120] }}{% if h.description|length > 120
+                            %}…{% endif %}</p>
+                        {% endif %}
+
+                        <!-- Dates -->
+                        {% if h.registration_deadline %}
+                        <small class="text-warning mb-1">
+                            <i class="bi bi-clock me-1"></i>Deadline: {{ h.registration_deadline.strftime('%b %d, %Y')
+                            }}
+                        </small>
+                        {% endif %}
+
+                        <!-- Team size -->
+                        <small class="text-secondary mb-2">
+                            <i class="bi bi-people me-1"></i>Team: {{ h.min_team_size or 1 }}–{{ h.max_team_size or 5 }}
+                            members
+                        </small>
+
+                        <!-- Required capabilities -->
+                        {% if h.required_capabilities %}
+                        <div class="d-flex flex-wrap gap-1 mb-2">
+                            {% for cap in h.required_capabilities %}
+                            <span class="badge bg-primary bg-opacity-25 text-primary-emphasis small">{{ cap }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Tags -->
+                        {% if h.tags %}
+                        <div class="d-flex flex-wrap gap-1 mb-3">
+                            {% for tag in h.tags %}
+                            <span class="badge bg-dark bg-opacity-50 small">#{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="mt-auto">
+                            {% if current_user and current_user.account_type.value == 'Leader' and h.id not in
+                            user_hackathon_teams and h.status.value != 'Completed' %}
+                            <a href="/teams/create?hackathon_id={{ h.id }}"
+                                class="btn btn-outline-primary btn-sm w-100">
+                                <i class="bi bi-plus-circle me-1"></i>Create Team
+                            </a>
+                            {% elif h.id in user_hackathon_teams %}
+                            <span class="badge bg-success w-100 py-2">
+                                <i class="bi bi-check-circle me-1"></i>Team Joined
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center text-secondary py-5">
+            <i class="bi bi-trophy" style="font-size:3rem;"></i>
+            {% if current_user and current_user.account_type.value == 'Leader' %}
+            <p class="mt-2">No hackathons found. Create one to get started!</p>
+            {% else %}
+            <p class="mt-2">No hackathons found.</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ═══ Projects Tab ═══ -->
+    <div class="tab-pane fade" id="projects-tab" role="tabpanel">
+        {% if projects %}
+        <div class="row g-3">
+            {% for p in projects %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span
+                                class="badge {% if p.status.value == 'Ideation' %}bg-warning text-dark{% elif p.status.value == 'Active' %}bg-success{% else %}bg-secondary{% endif %}">
+                                {{ p.status.value }}
+                            </span>
+                            {% if p.domain %}
+                            <small class="text-secondary">{{ p.domain }}</small>
+                            {% endif %}
+                        </div>
+
+                        <h5 class="card-title mb-1">{{ p.title }}</h5>
+
+                        {% if p.description %}
+                        <p class="text-secondary small mb-2">{{ p.description[:120] }}{% if p.description|length > 120
+                            %}…{% endif %}</p>
+                        {% endif %}
+
+                        {% if p.required_capabilities %}
+                        <div class="d-flex flex-wrap gap-1 mb-2">
+                            {% for cap in p.required_capabilities %}
+                            <span class="badge bg-primary bg-opacity-25 text-primary-emphasis small">{{ cap }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        {% if p.github_repo_url %}
+                        <a href="{{ p.github_repo_url if p.github_repo_url.startswith('http') else 'https://' ~ p.github_repo_url }}"
+                            target="_blank" class="btn btn-outline-dark btn-sm mt-auto">
+                            <i class="bi bi-github me-1"></i>View Repo
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center text-secondary py-5">
+            <i class="bi bi-kanban" style="font-size:3rem;"></i>
+            {% if current_user and current_user.account_type.value == 'Leader' %}
+            <p class="mt-2">No projects found. Create one to get started!</p>
+            {% else %}
+            <p class="mt-2">No projects found.</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ═══ Unstop Tab ═══ -->
+    <div class="tab-pane fade" id="unstop-tab" role="tabpanel">
+        {% if unstop_events %}
+        <div class="row g-3">
+            {% for u in unstop_events %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-info text-dark">
+                                {{ u.type }}
+                            </span>
+                            <small class="text-secondary fw-bold text-uppercase" style="font-size: 0.7rem;">
+                                <i class="bi bi-box-arrow-up-right me-1"></i>{{ u.source }}
+                            </small>
+                        </div>
+
+                        <h5 class="card-title mb-3">
+                            <a href="{{ u.url }}" target="_blank" class="text-decoration-none text-body">{{ u.title
+                                }}</a>
+                        </h5>
+
+                        <div class="mt-auto d-flex gap-2">
+                            <a href="{{ u.url }}" target="_blank" class="btn btn-outline-secondary btn-sm w-50">
+                                View
+                            </a>
+                            <form method="POST" action="/hackathons/unstop/participate" class="w-50 m-0">
+                                <input type="hidden" name="title" value="{{ u.title }}">
+                                <input type="hidden" name="url" value="{{ u.url }}">
+                                <button type="submit" class="btn btn-primary btn-sm w-100">
+                                    Participate
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center text-secondary py-5">
+            <i class="bi bi-globe" style="font-size:3rem;"></i>
+            <p class="mt-2">No external events found right now.</p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% if suggestions %}
+<div class="row g-3">
+    {% for s in suggestions %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 border-secondary border-opacity-25 hover-glow shadow-sm bg-dark">
+            <div class="card-body">
+                <!-- Header: Name & Archetype -->
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h5 class="fw-bold mb-0 text-white">{{ s.user.full_name }}</h5>
+                    {% if s.user.archetype %}
+                    <span class="badge bg-secondary bg-opacity-50 border border-secondary">{{ s.user.archetype.value
+                        }}</span>
+                    {% endif %}
+                </div>
+
+                <p class="small text-secondary mb-3">{{ s.user.bio or "No bio provided" }}</p>
+
+                <!-- Match Score Progress Bar -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small class="text-white fw-bold">Match Score</small>
+                        <small class="text-white fw-bold">{{ s.score_data.score }}%</small>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        {% set p_color = "bg-success" if s.score_data.score >= 70 else ("bg-warning" if
+                        s.score_data.score >= 40 else "bg-danger") %}
+                        <div class="progress-bar {{ p_color }}" role="progressbar"
+                            style="width: {{ s.score_data.score }}%;" aria-valuenow="{{ s.score_data.score }}"
+                            aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+
+                <!-- Match Details & Capabilities -->
+                <ul class="list-unstyled small text-secondary mb-3">
+                    <li>Capability Score: <strong>{{ s.score_data.capability_score }}%</strong></li>
+                    <li>Vibe Score: <strong>{{ s.score_data.vibe_score }}%</strong></li>
+                </ul>
+
+                {% if s.score_data.matching_capabilities %}
+                <div class="mb-3">
+                    <small class="text-white d-block mb-1">Matching Skills:</small>
+                    <div class="d-flex flex-wrap gap-1">
+                        {% for cap in s.score_data.matching_capabilities %}
+                        <span class="badge bg-success bg-opacity-25 text-success">{{ cap }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+            <div class="card-footer bg-transparent border-top border-secondary border-opacity-25 p-3">
+                <form action="/teams/{{ team.id }}/invite" method="POST" class="m-0">
+                    <input type="hidden" name="email" value="{{ s.user.email }}">
+                    <button type="submit" class="btn btn-outline-primary btn-sm w-100">
+                        <i class="bi bi-person-plus me-1"></i>Invite
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center text-secondary py-4">
+    <i class="bi bi-search" style="font-size: 2rem;"></i>
+    <p class="mt-2">No suggestions found at this time.</p>
+</div>
+{% endif %}

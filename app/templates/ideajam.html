@@ -1,0 +1,570 @@
+{% extends "base.html" %}
+
+{% block title %}Idea Jam — {{ team.name }} — N.E.S.T{% endblock %}
+
+{% block extra_head %}
+<style>
+    .jam-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    /* ── Timer ── */
+    .timer-ring {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border: 2px solid rgba(99, 179, 237, .3);
+        border-radius: 20px;
+        padding: 24px;
+        text-align: center;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, .3);
+    }
+
+    .timer-display {
+        font-size: 3.5rem;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 2px;
+    }
+
+    .timer-active {
+        color: #22d3ee;
+    }
+
+    .timer-warning {
+        color: #facc15;
+    }
+
+    .timer-danger {
+        color: #ef4444;
+        animation: pulse 1s ease-in-out infinite;
+    }
+
+    .timer-done {
+        color: #94a3b8;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: .5;
+        }
+    }
+
+    /* ── Ideas list ── */
+    .idea-card {
+        background: rgba(255, 255, 255, .04);
+        border: 1px solid rgba(255, 255, 255, .08);
+        border-radius: 12px;
+        padding: 16px;
+        transition: all .3s;
+    }
+
+    .idea-card:hover {
+        background: rgba(255, 255, 255, .07);
+        border-color: rgba(99, 179, 237, .2);
+    }
+
+    .idea-card.top-idea {
+        background: rgba(34, 197, 94, .1);
+        border-color: rgba(34, 197, 94, .4);
+    }
+
+    .vote-btn {
+        background: rgba(99, 179, 237, .1);
+        border: 1px solid rgba(99, 179, 237, .3);
+        color: #63b3ed;
+        border-radius: 8px;
+        padding: 4px 12px;
+        font-size: .85rem;
+        cursor: pointer;
+        transition: all .2s;
+    }
+
+    .vote-btn:hover {
+        background: rgba(99, 179, 237, .25);
+        transform: scale(1.05);
+    }
+
+    .vote-btn:disabled {
+        opacity: .4;
+        cursor: not-allowed;
+    }
+
+    .vote-count {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: #63b3ed;
+        min-width: 30px;
+        text-align: center;
+    }
+
+    /* ── Submit form ── */
+    .idea-input {
+        background: rgba(255, 255, 255, .06);
+        border: 1px solid rgba(255, 255, 255, .12);
+        border-radius: 12px;
+        color: #e0e0e0;
+        padding: 12px 16px;
+        font-size: .95rem;
+        resize: none;
+    }
+
+    .idea-input:focus {
+        background: rgba(255, 255, 255, .1);
+        border-color: rgba(99, 179, 237, .5);
+        box-shadow: 0 0 0 .2rem rgba(99, 179, 237, .15);
+        color: #fff;
+    }
+
+    .char-counter {
+        font-size: .75rem;
+        color: rgba(255, 255, 255, .4);
+    }
+
+    .char-counter.near-limit {
+        color: #facc15;
+    }
+
+    .char-counter.at-limit {
+        color: #ef4444;
+    }
+
+    /* ── Status badge ── */
+    .jam-status-active {
+        background: linear-gradient(135deg, #22d3ee, #6366f1);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .jam-status-completed {
+        color: #94a3b8;
+    }
+
+    /* ── Rank badge ── */
+    .rank-badge {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: .8rem;
+        flex-shrink: 0;
+    }
+
+    .rank-1 {
+        background: #facc15;
+        color: #1a1a2e;
+    }
+
+    .rank-2 {
+        background: #94a3b8;
+        color: #1a1a2e;
+    }
+
+    .rank-3 {
+        background: #cd7f32;
+        color: #1a1a2e;
+    }
+
+    .rank-other {
+        background: rgba(255, 255, 255, .1);
+        color: #94a3b8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="jam-container">
+
+    <!-- ── Header ── -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h3 class="mb-1">
+                <span style="font-size:1.5rem">💡</span> Idea Jam
+            </h3>
+            <p class="text-muted mb-0">
+                Team: <a href="/teams/{{ team.id }}" class="text-info text-decoration-none">{{ team.name }}</a>
+            </p>
+        </div>
+        <div>
+            <span class="badge bg-{{ 'info' if jam.status.value == 'Active' else 'secondary' }} fs-6">
+                {{ jam.status.value }}
+            </span>
+        </div>
+    </div>
+
+    <!-- ── Timer ── -->
+    <div class="timer-ring mb-4">
+        <div class="text-muted small text-uppercase mb-1">Time Remaining</div>
+        <div class="timer-display timer-active" id="timerDisplay">10:00</div>
+        <div class="progress mt-3" style="height: 4px; background: rgba(255,255,255,.06); border-radius: 4px;">
+            <div class="progress-bar" id="timerBar"
+                style="width: 100%; background: linear-gradient(90deg, #22d3ee, #6366f1); border-radius: 4px;">
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Submit form ── -->
+    <div class="card border-0 shadow mb-4" id="submitSection" style="background: rgba(255,255,255,.03);">
+        <div class="card-body p-4">
+            <h6 class="mb-3"><i class="bi bi-lightbulb me-2 text-warning"></i>Drop your idea</h6>
+            <div class="position-relative">
+                <textarea class="form-control idea-input" id="ideaInput" rows="2"
+                    placeholder="Share your idea in 280 characters or less..." maxlength="280"></textarea>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <span class="char-counter" id="charCounter">0 / 280</span>
+                    <button class="btn btn-primary btn-sm px-4" id="submitBtn" onclick="submitIdea()">
+                        <i class="bi bi-send-fill me-1"></i>Submit
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Ideas list ── -->
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-list-stars me-2"></i>Ideas</h5>
+        <span class="badge bg-secondary" id="ideaCount">0 ideas</span>
+    </div>
+    <div id="ideasList">
+        <p class="text-muted text-center py-4">No ideas yet. Be the first! 🚀</p>
+    </div>
+
+    <!-- ── Export button (shown after jam ends) ── -->
+    <div id="exportSection" class="text-center mt-4 d-none">
+
+        {% if current_user.id == team.lead_id %}
+        <div class="mb-4 p-3 border border-primary border-opacity-25 rounded bg-dark bg-opacity-50">
+            <h6 class="fw-bold mb-2 text-primary"><i class="bi bi-shield-lock me-2"></i>Finalize Team</h6>
+            <p class="small text-secondary mb-3">Review the ideas above. Once everyone has completed the survey, click
+                below to form your final team. Mismatched members will be removed and the team will be locked for the
+                hackathon.</p>
+            <form action="/ideajam/{{ jam.id }}/finalize-team" method="POST" class="d-inline">
+                <button type="submit" class="btn btn-primary"
+                    onclick="return confirm('Are you sure you want to finalize the team? This will lock the roster and remove any members based on survey responses.');">
+                    <i class="bi bi-check-circle-fill me-1"></i>Finalize Team & Lock
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
+        <div class="d-flex justify-content-center gap-2">
+            <button class="btn btn-outline-info" onclick="exportResults()">
+                <i class="bi bi-clipboard me-1"></i>Copy Results to Clipboard
+            </button>
+            <a href="/teams/{{ team.id }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Back to Team
+            </a>
+        </div>
+    </div>
+
+    <!-- ── Post-Jam Survey Section (shown after jam ends if not submitted) ── -->
+    <div id="surveySection" class="card border-warning border-opacity-50 mt-4 d-none"
+        style="background: rgba(255, 193, 7, 0.05);">
+        <div class="card-body p-4">
+            <h5 class="fw-bold mb-3 text-warning"><i class="bi bi-clipboard-check me-2"></i>Post-Jam Survey</h5>
+            <p class="text-secondary small mb-4">Before you view the final results, please provide some quick feedback
+                on your team experience.</p>
+
+            <form id="surveyForm" onsubmit="submitSurvey(event)">
+                <div class="mb-4">
+                    <label class="form-label d-block fw-bold">Would you like to continue working in this team?</label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="continue_in_team" id="continue_yes" value="true"
+                            checked>
+                        <label class="btn btn-outline-success" for="continue_yes">Yes, definitely</label>
+
+                        <input type="radio" class="btn-check" name="continue_in_team" id="continue_no" value="false">
+                        <label class="btn btn-outline-danger" for="continue_no">No, I'd rather not</label>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label d-block fw-bold">Is there any member you prefer NOT to work with?</label>
+                    <select class="form-select bg-dark border-secondary" name="avoid_member_id">
+                        <option value="">None (I can work with anyone)</option>
+                        {% for tmate in teammates %}
+                        <option value="{{ tmate.id }}">{{ tmate.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-warning w-100" id="surveySubmitBtn">
+                    Submit Survey & View Results
+                </button>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    (function () {
+        "use strict";
+
+        const JAM_ID = Number("{{ jam.id }}");
+        const ENDS_AT = new Date("{{ ends_at_iso }}");
+        const DURATION_MS = 10 * 60 * 1000;
+
+        const timerEl = document.getElementById("timerDisplay");
+        const timerBar = document.getElementById("timerBar");
+        const submitSection = document.getElementById("submitSection");
+        const ideaInput = document.getElementById("ideaInput");
+        const charCounter = document.getElementById("charCounter");
+        const ideasList = document.getElementById("ideasList");
+        const ideaCount = document.getElementById("ideaCount");
+        const exportSection = document.getElementById("exportSection");
+        const surveySection = document.getElementById("surveySection");
+        const surveyForm = document.getElementById("surveyForm");
+        const surveySubmitBtn = document.getElementById("surveySubmitBtn");
+        const submitBtn = document.getElementById("submitBtn");
+
+        let isActive = "{{ jam.status.value }}" === "Active";
+        let hasSubmittedSurvey = "{{ has_submitted_survey }}" === "True";
+
+        /* ── Character counter ── */
+        ideaInput.addEventListener("input", () => {
+            const len = ideaInput.value.length;
+            charCounter.textContent = `${len} / 280`;
+            charCounter.className = "char-counter" +
+                (len > 250 ? " at-limit" : len > 200 ? " near-limit" : "");
+        });
+
+        /* ── Countdown timer ── */
+        function updateTimer() {
+            const now = new Date();
+            const diff = ENDS_AT - now;
+
+            if (diff <= 0) {
+                timerEl.textContent = "00:00";
+                timerEl.className = "timer-display timer-done";
+                timerBar.style.width = "0%";
+                if (isActive) {
+                    isActive = false;
+                    onJamEnd();
+                }
+                return;
+            }
+
+            const mins = Math.floor(diff / 60000);
+            const secs = Math.floor((diff % 60000) / 1000);
+            timerEl.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+            // Progress bar
+            const elapsed = DURATION_MS - diff;
+            const pct = Math.max(0, 100 - (elapsed / DURATION_MS) * 100);
+            timerBar.style.width = pct + "%";
+
+            // Color
+            if (diff < 60000) {
+                timerEl.className = "timer-display timer-danger";
+                timerBar.style.background = "#ef4444";
+            } else if (diff < 180000) {
+                timerEl.className = "timer-display timer-warning";
+                timerBar.style.background = "linear-gradient(90deg, #facc15, #ef4444)";
+            } else {
+                timerEl.className = "timer-display timer-active";
+            }
+        }
+
+        if (isActive) {
+            setInterval(updateTimer, 1000);
+            updateTimer();
+        } else {
+            timerEl.textContent = "00:00";
+            timerEl.className = "timer-display timer-done";
+            timerBar.style.width = "0%";
+            onJamEnd();
+        }
+
+        /* ── On jam end ── */
+        function onJamEnd() {
+            submitSection.style.display = "none";
+
+            if (!hasSubmittedSurvey) {
+                // If they haven't submitted the survey, hide the ideas list and show the survey
+                document.getElementById("ideasList").parentElement?.previousElementSibling.classList.add("d-none");
+                ideasList.classList.add("d-none");
+                surveySection.classList.remove("d-none");
+            } else {
+                // Otherwise, show export section and leave ideas list visible
+                exportSection.classList.remove("d-none");
+            }
+
+            fetchEntries();
+        }
+
+        // Trigger on load if already completed
+        if (!isActive) {
+            onJamEnd();
+        }
+
+        /* ── Poll entries every 3s ── */
+        function fetchEntries() {
+            fetch(`/ideajam/${JAM_ID}/entries`)
+                .then(r => r.json())
+                .then(data => {
+                    renderEntries(data.entries, data.is_active);
+                    if (!data.is_active && isActive) {
+                        isActive = false;
+                        onJamEnd();
+                    }
+                })
+                .catch(err => console.error("Polling error:", err));
+        }
+
+        setInterval(fetchEntries, 3000);
+        fetchEntries();
+
+        /* ── Render entries ── */
+        function renderEntries(entries, active) {
+            ideaCount.textContent = `${entries.length} idea${entries.length !== 1 ? 's' : ''}`;
+
+            if (entries.length === 0) {
+                ideasList.innerHTML = '<p class="text-muted text-center py-4">No ideas yet. Be the first! 🚀</p>';
+                return;
+            }
+
+            let html = "";
+            entries.forEach((e, idx) => {
+                const isTop = idx === 0 && !active && entries.length > 1;
+                const rankClass = idx === 0 ? "rank-1" : idx === 1 ? "rank-2" : idx === 2 ? "rank-3" : "rank-other";
+
+                html += `
+                <div class="idea-card mb-2 ${isTop ? 'top-idea' : ''}">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="rank-badge ${rankClass}">${idx + 1}</div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong class="small">${escapeHtml(e.user_name)}</strong>
+                                    ${isTop ? '<span class="badge bg-success ms-2" style="font-size:.65rem">🏆 Top Idea</span>' : ''}
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="vote-count">${e.votes}</span>
+                                    <button class="vote-btn" onclick="voteIdea(${e.id})" title="Upvote">
+                                        <i class="bi bi-hand-thumbs-up-fill me-1"></i>Vote
+                                    </button>
+                                </div>
+                            </div>
+                            <p class="mb-0 mt-1" style="color: #e0e0e0;">${escapeHtml(e.idea_text)}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            });
+            ideasList.innerHTML = html;
+        }
+
+        /* ── Submit idea ── */
+        window.submitIdea = function () {
+            const text = ideaInput.value.trim();
+            if (!text) return;
+
+            submitBtn.disabled = true;
+            const formData = new FormData();
+            formData.append("idea_text", text);
+
+            fetch(`/ideajam/${JAM_ID}/submit`, { method: "POST", body: formData })
+                .then(r => {
+                    if (!r.ok) throw new Error("Submit failed");
+                    return r.json();
+                })
+                .then(() => {
+                    ideaInput.value = "";
+                    charCounter.textContent = "0 / 280";
+                    charCounter.className = "char-counter";
+                    submitBtn.disabled = false;
+                    fetchEntries();
+                })
+                .catch(err => {
+                    alert("Could not submit idea. The jam may have ended.");
+                    submitBtn.disabled = false;
+                });
+        };
+
+        // Submit on Enter (Shift+Enter for newline)
+        ideaInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                window.submitIdea();
+            }
+        });
+
+        /* ── Vote ── */
+        window.voteIdea = function (entryId) {
+            fetch(`/ideajam/${JAM_ID}/vote/${entryId}`, { method: "POST" })
+                .then(r => r.json())
+                .then(() => fetchEntries())
+                .catch(err => console.error("Vote error:", err));
+        };
+
+        /* ── Submit Survey ── */
+        window.submitSurvey = function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(surveyForm);
+            surveySubmitBtn.disabled = true;
+            surveySubmitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Submitting...';
+
+            fetch(`/ideajam/${JAM_ID}/survey`, { method: "POST", body: formData })
+                .then(r => {
+                    if (!r.ok) throw new Error("Survey failed");
+                    return r.json();
+                })
+                .then(() => {
+                    hasSubmittedSurvey = true;
+                    // Hide survey, show ideas and export section
+                    surveySection.classList.add("d-none");
+                    document.getElementById("ideasList").parentElement?.previousElementSibling.classList.remove("d-none");
+                    ideasList.classList.remove("d-none");
+                    exportSection.classList.remove("d-none");
+                })
+                .catch(err => {
+                    alert("Could not submit survey. Please try again.");
+                    surveySubmitBtn.disabled = false;
+                    surveySubmitBtn.innerHTML = 'Submit Survey & View Results';
+                });
+        };
+
+        /* ── Export results ── */
+        window.exportResults = function () {
+            fetch(`/ideajam/${JAM_ID}/entries`)
+                .then(r => r.json())
+                .then(data => {
+                    let text = "🧠 Idea Jam Results\n";
+                    text += "═══════════════════\n\n";
+                    data.entries.forEach((e, idx) => {
+                        const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`;
+                        text += `${medal} [${e.votes} votes] ${e.idea_text}\n   — ${e.user_name}\n\n`;
+                    });
+                    navigator.clipboard.writeText(text).then(() => {
+                        const btn = document.querySelector("#exportSection button");
+                        btn.innerHTML = '<i class="bi bi-check2 me-1"></i>Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = '<i class="bi bi-clipboard me-1"></i>Copy Results to Clipboard';
+                        }, 2000);
+                    });
+                });
+        };
+
+        /* ── Escape HTML ── */
+        function escapeHtml(str) {
+            const d = document.createElement("div");
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+    })();
+</script>
+{% endblock %}

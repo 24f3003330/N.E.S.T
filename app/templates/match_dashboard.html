@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Match Dashboard — N.E.S.T{% endblock %}
+
+{% block content %}
+<div class="py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="fw-bold mb-1"><i class="bi bi-stars text-warning me-2"></i>Smart Match</h1>
+            <p class="text-secondary mb-0">Discover your perfect team or find the missing piece for your project.</p>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <!-- Find Teams (For Members) -->
+        <div class="col-md-6">
+            <div class="card h-100 border-info border-opacity-50 hover-glow shadow bg-dark">
+                <div class="card-body p-5 text-center">
+                    <div class="mb-4">
+                        <i class="bi bi-search text-info" style="font-size: 3rem;"></i>
+                    </div>
+                    <h3 class="fw-bold mb-3">Find a Team</h3>
+                    <p class="text-secondary mb-4">Looking to join a hackathon? Let our AI match you with teams that
+                        perfectly complement your skills and archetype.</p>
+
+                    <div class="dropdown">
+                        <button class="btn btn-info btn-lg px-4 fw-bold w-100 dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-magic me-2"></i>Match Me with Teams
+                        </button>
+                        <ul class="dropdown-menu w-100 bg-dark border-secondary">
+                            <li>
+                                <h6 class="dropdown-header text-secondary">Select a Hackathon</h6>
+                            </li>
+                            {% if hackathons %}
+                            {% for h in hackathons %}
+                            <li><a class="dropdown-item text-white hover-bg-secondary"
+                                    href="/match/teams-for-me/{{ h.id }}">{{ h.title }}</a></li>
+                            {% endfor %}
+                            {% else %}
+                            <li><span class="dropdown-item text-muted">No active hackathons found.</span></li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Find Members (For Leaders) -->
+        <div class="col-md-6">
+            <div class="card h-100 border-primary border-opacity-50 hover-glow shadow bg-dark">
+                <div class="card-body p-5 text-center">
+                    <div class="mb-4">
+                        <i class="bi bi-person-plus text-primary" style="font-size: 3rem;"></i>
+                    </div>
+                    <h3 class="fw-bold mb-3">Find Members</h3>
+                    <p class="text-secondary mb-4">Leading a team? Discover candidates who possess the exact technical
+                        skills and vibe you need to win.</p>
+
+                    <div class="dropdown">
+                        <button class="btn btn-primary btn-lg px-4 fw-bold w-100 dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-people me-2"></i>Match Me with Users
+                        </button>
+                        <ul class="dropdown-menu w-100 bg-dark border-secondary">
+                            <li>
+                                <h6 class="dropdown-header text-secondary">Select Your Team</h6>
+                            </li>
+                            {% if my_teams %}
+                            {% for t in my_teams %}
+                            <li><a class="dropdown-item text-white hover-bg-secondary"
+                                    href="/teams/{{ t.id }}#suggestions-container">{{ t.name }}</a></li>
+                            {% endfor %}
+                            {% else %}
+                            <li><span class="dropdown-item text-muted">You are not leading any forming teams.</span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- How it works -->
+    <div class="card bg-secondary bg-opacity-10 border-0 p-4 rounded-4">
+        <h5 class="fw-bold mb-3 text-center">How our matching works</h5>
+        <div class="row g-4 text-center">
+            <div class="col-md-4">
+                <i class="bi bi-tools text-primary mb-2 fs-3"></i>
+                <h6 class="fw-bold">Capability Synergy</h6>
+                <p class="small text-secondary mb-0">We match your tech stack, design tools, and soft skills against
+                    what the team is missing.</p>
+            </div>
+            <div class="col-md-4">
+                <i class="bi bi-lightning-charge text-warning mb-2 fs-3"></i>
+                <h6 class="fw-bold">Archetype Vibe</h6>
+                <p class="small text-secondary mb-0">Builders need Designers. Researchers need Strategists. We calculate
+                    the ultimate team dynamic.</p>
+            </div>
+            <div class="col-md-4">
+                <i class="bi bi-award text-success mb-2 fs-3"></i>
+                <h6 class="fw-bold">Proficiency Weighting</h6>
+                <p class="small text-secondary mb-0">Experts carry more weight where needed, but eager beginners are
+                    matched to mentor-rich teams.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

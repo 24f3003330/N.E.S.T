@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}{{ user.full_name }} — N.E.S.T{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+    <!-- ════════════════════════════════════════════════
+         LEFT COLUMN — User Card
+         ════════════════════════════════════════════════ -->
+    <div class="col-lg-4">
+        <div class="card shadow border-0 text-center">
+            <div class="card-body p-4">
+                <!-- Avatar placeholder -->
+                <div class="rounded-circle bg-primary bg-opacity-25 d-inline-flex align-items-center justify-content-center mb-3"
+                    style="width:90px;height:90px;">
+                    <i class="bi bi-person-fill text-primary" style="font-size:2.5rem;"></i>
+                </div>
+
+                <h4 class="card-title mb-1">{{ user.full_name }}</h4>
+                <p class="text-secondary mb-2">{{ user.email }}</p>
+
+                <!-- Archetype badge -->
+                {% if user.archetype %}
+                <span class="badge bg-info mb-3">
+                    <i class="bi bi-lightning-charge-fill me-1"></i>{{ user.archetype.value }}
+                </span>
+                {% endif %}
+
+                <!-- Rating badge (Hidden from owner) -->
+                {% if not is_owner %}
+                <div class="mb-3">
+                    {% if rating_count > 0 %}
+                    <span class="badge bg-warning text-dark px-3 py-2 border border-warning" title="Peer evaluations">
+                        <i class="bi bi-star-fill text-dark me-1"></i>
+                        {{ average_rating }} / 5.0
+                        <span class="fw-normal ms-1 opacity-75">({{ rating_count }} reviews)</span>
+                    </span>
+                    {% else %}
+                    <span class="badge bg-secondary bg-opacity-25 text-secondary px-3 py-2 border border-secondary"
+                        title="No peer evaluations yet">
+                        <i class="bi bi-star me-1"></i> No ratings yet
+                    </span>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <ul class="list-unstyled text-start mt-3 mb-0 small">
+                    <li class="mb-2">
+                        <i class="bi bi-card-heading text-primary me-2"></i>
+                        <strong>Campus ID:</strong> {{ user.campus_id }}
+                    </li>
+                    {% if user.department %}
+                    <li class="mb-2">
+                        <i class="bi bi-building text-primary me-2"></i>
+                        <strong>Department:</strong> {{ user.department }}
+                    </li>
+                    {% endif %}
+                    {% if user.year_of_study %}
+                    <li class="mb-2">
+                        <i class="bi bi-calendar3 text-primary me-2"></i>
+                        <strong>Year:</strong> {{ user.year_of_study }}
+                    </li>
+                    {% endif %}
+                    {% if user.linkedin_url %}
+                    <li class="mb-2">
+                        <i class="bi bi-linkedin text-primary me-2"></i>
+                        <a href="{{ user.linkedin_url if user.linkedin_url.startswith('http') else 'https://' ~ user.linkedin_url }}"
+                            target="_blank" class="text-decoration-none">LinkedIn</a>
+                    </li>
+                    {% endif %}
+                    {% if user.github_username %}
+                    <li class="mb-2">
+                        <i class="bi bi-github text-primary me-2"></i>
+                        <a href="https://github.com/{{ user.github_username }}" target="_blank"
+                            class="text-decoration-none">{{ user.github_username }}</a>
+                    </li>
+                    {% endif %}
+                </ul>
+
+                {% if user.bio %}
+                <hr />
+                <p class="text-secondary small mb-0">{{ user.bio }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- My Teams Section -->
+        <div class="card shadow border-0 mt-4 text-start">
+            <div class="card-body p-4">
+                <h5 class="card-title fw-bold mb-3">
+                    <i class="bi bi-people me-2 text-primary"></i>My Teams
+                </h5>
+
+                {% if my_teams %}
+                <div class="d-flex flex-column gap-2">
+                    {% for team in my_teams %}
+                    <a href="/teams/{{ team.id }}" class="text-decoration-none">
+                        <div class="p-3 border rounded hover-bg-light transition-all rounded-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ team.name }}</h6>
+                                    <span
+                                        class="badge bg-{{ 'success' if team.status.value == 'Forming' else 'secondary' }} rounded-pill"
+                                        style="font-size: 0.75rem;">
+                                        {{ team.status.value }}
+                                    </span>
+                                </div>
+                                <i class="bi bi-chevron-right text-muted"></i>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0 small text-center">Not a member of any teams yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════
+         RIGHT COLUMN — Capabilities + Edit Forms
+         ════════════════════════════════════════════════ -->
+    <div class="col-lg-8">
+
+        <!-- Success / error banners -->
+        {% if success %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ success }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endif %}
+
+        <!-- ── Capabilities Card ── -->
+        <div class="card shadow border-0 mb-4">
+            <div class="card-header bg-transparent border-bottom-0 pt-4 px-4">
+                <h5 class="mb-0"><i class="bi bi-stars me-2 text-warning"></i>Capabilities</h5>
+            </div>
+            <div class="card-body px-4 pb-4 pt-2">
+                {% if grouped_caps %}
+                {% for category, caps in grouped_caps.items() %}
+                <h6 class="text-uppercase text-secondary small fw-bold mt-3 mb-2">{{ category }}</h6>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    {% for cap in caps %}
+                    <span
+                        class="badge bg-{{ category_colors.get(category, 'secondary') }} bg-opacity-75 fs-6 d-inline-flex align-items-center gap-1 py-2 px-3">
+                        {% if cap.is_verified %}<i class="bi bi-check-circle-fill text-white" title="Verified"></i>{%
+                        endif %}
+                        {{ cap.name }}
+                        <span class="badge bg-dark bg-opacity-50 ms-1 fw-normal small">{{ cap.proficiency_level.value
+                            }}</span>
+
+                        {% if is_owner %}
+                        <form method="post" action="/profile/capabilities/{{ cap.id }}/delete" class="d-inline ms-1">
+                            <button type="submit" class="btn-close btn-close-white" style="font-size:.55rem;"
+                                title="Remove"></button>
+                        </form>
+                        {% endif %}
+                    </span>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="text-secondary mb-0">No capabilities added yet.</p>
+                {% endif %}
+
+                <!-- ── Add Capability inline form (owner only) ── -->
+                {% if is_owner %}
+                <hr />
+                <h6 class="mb-3"><i class="bi bi-plus-circle me-1"></i>Add Capability</h6>
+                <form method="post" action="/profile/capabilities/add">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-4">
+                            <label for="cap_name" class="form-label small">Name</label>
+                            <input type="text" class="form-control form-control-sm" id="cap_name" name="cap_name"
+                                placeholder="e.g. Python" required />
+                        </div>
+                        <div class="col-md-3">
+                            <label for="cap_category" class="form-label small">Category</label>
+                            <select class="form-select form-select-sm" id="cap_category" name="cap_category" required>
+                                {% for cat in categories %}
+                                <option value="{{ cat }}">{{ cat }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="cap_proficiency" class="form-label small">Proficiency</label>
+                            <select class="form-select form-select-sm" id="cap_proficiency" name="cap_proficiency">
+                                {% for prof in proficiencies %}
+                                <option value="{{ prof }}">{{ prof }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary btn-sm w-100">
+                                <i class="bi bi-plus-lg"></i> Add
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ── Edit Profile Accordion (owner only) ── -->
+        {% if is_owner %}
+        <div class="accordion" id="editProfileAccordion">
+            <div class="accordion-item border-0 shadow">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#editPanel">
+                        <i class="bi bi-pencil-square me-2"></i>Edit Profile
+                    </button>
+                </h2>
+                <div id="editPanel" class="accordion-collapse collapse" data-bs-parent="#editProfileAccordion">
+                    <div class="accordion-body">
+                        <form method="post" action="/profile/update">
+
+                            <!-- Bio -->
+                            <div class="mb-3">
+                                <label for="bio" class="form-label">Bio</label>
+                                <textarea class="form-control" id="bio" name="bio" rows="3"
+                                    placeholder="Tell others about yourself…">{{ user.bio or '' }}</textarea>
+                            </div>
+
+                            <!-- Archetype -->
+                            <div class="mb-3">
+                                <label for="archetype" class="form-label">Archetype</label>
+                                <select class="form-select" id="archetype" name="archetype">
+                                    <option value="">— Select —</option>
+                                    {% for arch in archetypes %}
+                                    <option value="{{ arch }}" {% if user.archetype and user.archetype.value==arch
+                                        %}selected{% endif %}>
+                                        {{ arch }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Account Type -->
+                            <div class="mb-3">
+                                <label for="account_type" class="form-label">Platform Role</label>
+                                <select class="form-select" id="account_type" name="account_type">
+                                    <option value="Member" {% if user.account_type.value=='Member' %}selected{% endif
+                                        %}>Join Teams (Member)</option>
+                                    <option value="Leader" {% if user.account_type.value=='Leader' %}selected{% endif
+                                        %}>Lead Teams (Leader)</option>
+                                </select>
+                            </div>
+
+                            <!-- Year of Study -->
+                            <div class="mb-3">
+                                <label for="year_of_study" class="form-label">Year of Study</label>
+                                <input type="number" class="form-control" id="year_of_study" name="year_of_study"
+                                    min="1" max="6" value="{{ user.year_of_study or '' }}" />
+                            </div>
+
+                            <!-- LinkedIn -->
+                            <div class="mb-3">
+                                <label for="linkedin_url" class="form-label">LinkedIn URL</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-linkedin"></i></span>
+                                    <input type="text" class="form-control" id="linkedin_url" name="linkedin_url"
+                                        placeholder="https://linkedin.com/in/…" value="{{ user.linkedin_url or '' }}" />
+                                </div>
+                            </div>
+
+                            <!-- GitHub -->
+                            <div class="mb-3">
+                                <label for="github_username" class="form-label">GitHub Username</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-github"></i></span>
+                                    <input type="text" class="form-control" id="github_username" name="github_username"
+                                        placeholder="octocat" value="{{ user.github_username or '' }}" />
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check2 me-1"></i>Save Changes
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

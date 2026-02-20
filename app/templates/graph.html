@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Collaboration Network — N.E.S.T{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* ── Layout ── */
+    .graph-wrapper {
+        position: relative;
+        width: 100%;
+        height: calc(100vh - 180px);
+        min-height: 500px;
+        border-radius: 16px;
+        overflow: hidden;
+        background: linear-gradient(135deg, #0f1923 0%, #1a1a2e 50%, #16213e 100%);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, .4);
+    }
+
+    .graph-wrapper svg {
+        width: 100%;
+        height: 100%;
+    }
+
+    /* ── Controls bar ── */
+    .graph-controls {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        right: 16px;
+        z-index: 10;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .graph-controls .form-control,
+    .graph-controls .form-select {
+        max-width: 200px;
+        background: rgba(255, 255, 255, .06);
+        border: 1px solid rgba(255, 255, 255, .12);
+        color: #e0e0e0;
+        backdrop-filter: blur(12px);
+        font-size: .85rem;
+    }
+
+    .graph-controls .form-control::placeholder {
+        color: rgba(255, 255, 255, .4);
+    }
+
+    .graph-controls .form-control:focus,
+    .graph-controls .form-select:focus {
+        background: rgba(255, 255, 255, .1);
+        border-color: rgba(99, 179, 237, .5);
+        box-shadow: 0 0 0 .2rem rgba(99, 179, 237, .15);
+        color: #fff;
+    }
+
+    /* ── Tooltip ── */
+    .graph-tooltip {
+        position: absolute;
+        pointer-events: none;
+        background: rgba(15, 25, 40, .92);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(99, 179, 237, .3);
+        border-radius: 12px;
+        padding: 14px 18px;
+        font-size: .82rem;
+        color: #e0e0e0;
+        min-width: 180px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, .5);
+        opacity: 0;
+        transition: opacity .2s;
+        z-index: 20;
+    }
+
+    .graph-tooltip.show {
+        opacity: 1;
+    }
+
+    .graph-tooltip h6 {
+        color: #63b3ed;
+        margin-bottom: 6px;
+        font-weight: 700;
+    }
+
+    .graph-tooltip .tt-label {
+        color: rgba(255, 255, 255, .5);
+        font-size: .75rem;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+    }
+
+    .graph-tooltip .badge {
+        font-size: .7rem;
+    }
+
+    /* ── Sidebar ── */
+    .profile-sidebar {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 320px;
+        height: 100%;
+        background: rgba(15, 25, 40, .95);
+        backdrop-filter: blur(20px);
+        border-left: 1px solid rgba(99, 179, 237, .2);
+        transform: translateX(100%);
+        transition: transform .35s cubic-bezier(.4, 0, .2, 1);
+        z-index: 15;
+        overflow-y: auto;
+        padding: 24px;
+    }
+
+    .profile-sidebar.open {
+        transform: translateX(0);
+    }
+
+    .profile-sidebar .close-btn {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: none;
+        border: none;
+        color: #e0e0e0;
+        font-size: 1.2rem;
+        cursor: pointer;
+    }
+
+    .profile-sidebar h5 {
+        color: #63b3ed;
+        font-weight: 700;
+    }
+
+    /* ── Legend ── */
+    .graph-legend {
+        position: absolute;
+        bottom: 16px;
+        left: 16px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        z-index: 10;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: .75rem;
+        color: rgba(255, 255, 255, .6);
+    }
+
+    .legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h3 class="mb-0"><i class="bi bi-diagram-3-fill me-2 text-info"></i>Collaboration Network</h3>
+</div>
+
+<div class="graph-wrapper" id="graphWrapper">
+    <!-- Controls -->
+    <div class="graph-controls">
+        <input type="text" class="form-control" id="searchInput" placeholder="🔍 Search user...">
+        <select class="form-select" id="filterDept">
+            <option value="">All Departments</option>
+        </select>
+        <select class="form-select" id="filterArchetype">
+            <option value="">All Archetypes</option>
+        </select>
+    </div>
+
+    <!-- SVG rendered by D3 -->
+    <svg id="networkSvg"></svg>
+
+    <!-- Tooltip -->
+    <div class="graph-tooltip" id="graphTooltip"></div>
+
+    <!-- Profile sidebar -->
+    <div class="profile-sidebar" id="profileSidebar">
+        <button class="close-btn" id="closeSidebar"><i class="bi bi-x-lg"></i></button>
+        <div id="sidebarContent"></div>
+    </div>
+
+    <!-- Legend -->
+    <div class="graph-legend" id="graphLegend"></div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="/static/js/network_graph.js"></script>
+{% endblock %}

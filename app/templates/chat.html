@@ -1,0 +1,417 @@
+{% extends "base.html" %}
+
+{% block title %}Chat: {{ team.name }} — N.E.S.T{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<style>
+    /* Chat Container Layout - Premium Glassmorphism */
+    .chat-layout {
+        display: flex;
+        height: calc(100vh - 120px);
+        margin-top: 1rem;
+        background: var(--bs-body-bg);
+        border: 1px solid var(--bs-border-color-translucent);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Sidebar: Members */
+    .chat-sidebar {
+        width: 280px;
+        background: rgba(var(--bs-body-bg-rgb), 0.7);
+        backdrop-filter: blur(10px);
+        border-right: 1px solid var(--bs-border-color-translucent);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-sidebar-header {
+        padding: 1.25rem;
+        border-bottom: 1px solid var(--bs-border-color-translucent);
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--bs-heading-color);
+        background: transparent;
+    }
+
+    .chat-members {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0.5rem 0;
+    }
+
+    .member-item {
+        padding: 0.85rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: background-color 0.2s ease;
+        color: var(--bs-body-color);
+    }
+
+    .member-item:hover {
+        background: var(--bs-secondary-bg);
+    }
+
+    .member-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        object-fit: cover;
+        background: var(--bs-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 700;
+        color: #fff;
+        box-shadow: 0 4px 10px rgba(var(--bs-primary-rgb), 0.3);
+    }
+
+    /* Main Chat Area */
+    .chat-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: transparent;
+        position: relative;
+    }
+
+    .chat-main::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at top right, rgba(var(--bs-primary-rgb), 0.05), transparent 40%),
+            radial-gradient(circle at bottom left, rgba(var(--bs-info-rgb), 0.05), transparent 40%);
+        z-index: 0;
+        pointer-events: none;
+    }
+
+    .chat-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--bs-border-color-translucent);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(var(--bs-body-bg-rgb), 0.6);
+        backdrop-filter: blur(8px);
+        z-index: 10;
+    }
+
+    .chat-history {
+        flex: 1;
+        padding: 2rem 1.5rem;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        z-index: 1;
+    }
+
+    /* Message Bubbles - Modern Refinement */
+    .msg-wrapper {
+        display: flex;
+        flex-direction: column;
+        max-width: 80%;
+        animation: fadeIn 0.3s ease forwards;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .msg-wrapper.me {
+        align-self: flex-end;
+        align-items: flex-end;
+    }
+
+    .msg-wrapper.other {
+        align-self: flex-start;
+        align-items: flex-start;
+    }
+
+    .msg-wrapper.bot {
+        align-self: center;
+        align-items: center;
+        max-width: 90%;
+        margin-top: 1rem;
+    }
+
+    .msg-name {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--bs-secondary-color);
+        margin-bottom: 0.4rem;
+        padding: 0 4px;
+        letter-spacing: 0.5px;
+    }
+
+    .msg-bubble {
+        padding: 1rem 1.25rem;
+        border-radius: 20px;
+        font-size: 1rem;
+        line-height: 1.5;
+        word-wrap: break-word;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Specific bubble variants */
+    .msg-wrapper.me .msg-bubble {
+        background: linear-gradient(135deg, var(--bs-primary), #0a58ca);
+        color: white;
+        border-bottom-right-radius: 4px;
+    }
+
+    .msg-wrapper.other .msg-bubble {
+        background: var(--bs-secondary-bg);
+        color: var(--bs-body-color);
+        border-bottom-left-radius: 4px;
+        border: 1px solid var(--bs-border-color-translucent);
+    }
+
+    .msg-wrapper.bot .msg-bubble {
+        background: rgba(var(--bs-info-rgb), 0.1);
+        color: var(--bs-info);
+        font-size: 0.9rem;
+        border-radius: 12px;
+        border: 1px solid rgba(var(--bs-info-rgb), 0.3);
+        backdrop-filter: blur(5px);
+    }
+
+    .msg-wrapper.bot .msg-bubble a {
+        color: var(--bs-primary);
+        font-weight: 600;
+    }
+
+    /* Input Area */
+    .chat-input-area {
+        padding: 1.25rem 1.5rem;
+        background: rgba(var(--bs-body-bg-rgb), 0.8);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid var(--bs-border-color-translucent);
+        z-index: 10;
+    }
+
+    .chat-input-area .form-control {
+        border-radius: 24px;
+        padding: 0.75rem 1.5rem;
+        background: var(--bs-tertiary-bg);
+        border: 1px solid var(--bs-border-color);
+        transition: all 0.3s;
+    }
+
+    .chat-input-area .form-control:focus {
+        box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+        background: var(--bs-body-bg);
+    }
+
+    .btn-send {
+        border-radius: 50%;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Responsive tweaks */
+    @media (max-width: 768px) {
+        .chat-sidebar {
+            display: none;
+        }
+
+        .chat-layout {
+            height: calc(100vh - 80px);
+            border-radius: 0;
+            border-left: none;
+            border-right: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+    <!-- Breadcrumb / Back button -->
+    <div class="mb-2">
+        <a href="/teams/{{ team.id }}" class="text-decoration-none text-muted">
+            <i class="bi bi-arrow-left"></i> Back to Team Dashboard
+        </a>
+    </div>
+
+    <div class="chat-layout shadow-sm border">
+        <!-- Sidebar -->
+        <div class="chat-sidebar">
+            <div class="chat-sidebar-header">
+                <i class="bi bi-people me-2"></i> Members
+            </div>
+            <div class="chat-members">
+                {% for mem in members %}
+                <div class="member-item">
+                    {% if mem.avatar_url %}
+                    <img src="{{ mem.avatar_url }}" alt="{{ mem.full_name }}" class="member-avatar">
+                    {% else %}
+                    <div class="member-avatar">{{ mem.full_name[0] | upper }}</div>
+                    {% endif %}
+                    <div class="text-truncate" style="font-size: 0.9rem;">
+                        {{ mem.full_name }}
+                        {% if mem.id == current_user.id %}
+                        <span class="text-muted small">(You)</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Main Chat -->
+        <div class="chat-main">
+            <div class="chat-header">
+                <div class="d-flex align-items-center gap-2">
+                    <h5 class="mb-0">{{ team.name }}</h5>
+                    <span class="badge bg-primary rounded-pill">Chat</span>
+                </div>
+            </div>
+
+            <div class="chat-history" id="chatHistory">
+                <!-- Messages injected here -->
+                <div class="text-center text-muted small py-3" id="loadingIndicator">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    Loading history...
+                </div>
+            </div>
+
+            <div class="chat-input-area">
+                <form id="chatForm" class="d-flex gap-2">
+                    <input type="text" id="messageInput" class="form-control"
+                        placeholder="Type a message (or '/bot help')" autocomplete="off" required>
+                    <button type="submit" class="btn btn-primary btn-send">
+                        <i class="bi bi-send-fill"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const currentUserId = Number("{{ current_user.id }}");
+    const roomId = Number("{{ room.id }}");
+    const chatHistory = document.getElementById("chatHistory");
+    const chatForm = document.getElementById("chatForm");
+    const messageInput = document.getElementById("messageInput");
+    const loadingIndicator = document.getElementById("loadingIndicator");
+
+    // Determine WebSocket protocol
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${protocol}//${window.location.host}/chat/ws/${roomId}?user_id=${currentUserId}`;
+
+    let ws;
+
+    // 1. Fetch historical messages
+    async function loadHistory() {
+        try {
+            const res = await fetch(`/chat/${roomId}/history`);
+            if (res.ok) {
+                const data = await res.json();
+                loadingIndicator.style.display = 'none';
+                data.messages.forEach(msg => {
+                    appendAjaxMessage(msg);
+                });
+                scrollToBottom();
+            } else {
+                loadingIndicator.innerHTML = '<span class="text-danger">Failed to load history</span>';
+            }
+        } catch (e) {
+            console.error(e);
+            loadingIndicator.innerHTML = '<span class="text-danger">Failed to connect to server</span>';
+        }
+    }
+
+    // 2. DOM Builder for messages
+    function appendAjaxMessage(msg) {
+        const wrapper = document.createElement('div');
+        wrapper.classList.add('msg-wrapper');
+
+        let headerLabel = "";
+
+        if (msg.is_bot) {
+            wrapper.classList.add('bot');
+            headerLabel = "🤖 N.E.S.T Bot";
+        } else if (msg.sender_id === currentUserId) {
+            wrapper.classList.add('me');
+            headerLabel = "You";
+        } else {
+            wrapper.classList.add('other');
+            headerLabel = msg.sender_name;
+        }
+
+        // Header
+        const header = document.createElement('div');
+        header.classList.add('msg-name');
+        header.innerText = headerLabel;
+
+        // Bubble
+        const bubble = document.createElement('div');
+        bubble.classList.add('msg-bubble');
+        bubble.innerHTML = msg.content; // Use innerHTML to allow bot markdown formatting
+
+        wrapper.appendChild(header);
+        wrapper.appendChild(bubble);
+        chatHistory.appendChild(wrapper);
+    }
+
+    function scrollToBottom() {
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+
+    // 3. Setup WebSocket
+    function connectWS() {
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+            console.log("Connected to Chat Room " + roomId);
+        };
+
+        ws.onmessage = (event) => {
+            const msg = JSON.parse(event.data);
+            appendAjaxMessage(msg);
+            scrollToBottom();
+        };
+
+        ws.onclose = () => {
+            console.log("Disconnected from Chat Room " + roomId);
+            const sysWrapper = document.createElement('div');
+            sysWrapper.className = 'text-center text-muted small my-2';
+            sysWrapper.innerText = "Connection lost. Please refresh the page.";
+            chatHistory.appendChild(sysWrapper);
+        };
+    }
+
+    // 4. Form Submission
+    chatForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        const text = messageInput.value.trim();
+        if (text && ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(text);
+            messageInput.value = "";
+        }
+    });
+
+    // Initialize
+    loadHistory().then(connectWS);
+</script>
+{% endblock %}

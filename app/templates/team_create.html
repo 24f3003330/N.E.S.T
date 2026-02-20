@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Create a Team — N.E.S.T{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-5">
+    <div class="col-md-8 col-lg-6">
+        <div class="card p-4 p-md-5">
+            <div class="text-center mb-4">
+                <div class="feature-icon mb-3 mx-auto" style="width: 56px; height: 56px; font-size: 1.4rem;">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <h2 class="fw-bold mb-1">Create a Team</h2>
+                <p class="text-secondary small">Gather your crew and start building</p>
+            </div>
+
+            <form action="/teams/create" method="POST">
+                {% if hackathon_id %}
+                <input type="hidden" name="hackathon_id" value="{{ hackathon_id }}">
+                <div class="alert alert-info border-0 bg-info bg-opacity-10 d-flex align-items-center rounded-3 mb-4">
+                    <i class="bi bi-trophy text-info fs-4 me-3"></i>
+                    <div>
+                        <strong>Hackathon Team</strong>
+                        <div class="small">This team will be linked to hackathon #{{ hackathon_id }}</div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if project_id %}
+                <input type="hidden" name="project_id" value="{{ project_id }}">
+                <div
+                    class="alert alert-primary border-0 bg-primary bg-opacity-10 d-flex align-items-center rounded-3 mb-4">
+                    <i class="bi bi-kanban text-primary fs-4 me-3"></i>
+                    <div>
+                        <strong>Project Team</strong>
+                        <div class="small">This team will be linked to project #{{ project_id }}</div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <label class="form-label text-secondary small text-uppercase fw-bold">Team Name</label>
+                    <input type="text" class="form-control" name="name" required placeholder="e.g. The Innovators">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-secondary small text-uppercase fw-bold">Description</label>
+                    <textarea class="form-control" name="description" rows="3"
+                        placeholder="What are you building?"></textarea>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label text-secondary small text-uppercase fw-bold">Max Members</label>
+                        <input type="number" class="form-control" name="max_size" min="2" max="10" placeholder="e.g. 4">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-secondary small text-uppercase fw-bold">GitHub Repo
+                            (Optional)</label>
+                        <input type="url" class="form-control" name="github_repo_url"
+                            placeholder="https://github.com/...">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 btn-glow py-2 fw-bold">
+                    <i class="bi bi-check-circle me-1"></i>Create Team
+                </button>
+                <div class="text-center mt-3">
+                    <a href="/hackathons/dashboard" class="text-secondary text-decoration-none small">Cancel and go
+                        back</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

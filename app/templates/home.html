@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}N.E.S.T — Find Your Team, Build Something Amazing{% endblock %}
+
+{% block content %}
+
+<!-- ═══════════════════════════════════════════════
+     HERO SECTION
+     ═══════════════════════════════════════════════ -->
+<section class="hero-section text-center py-5 mb-5">
+    <div class="hero-glow"></div>
+    <div class="position-relative">
+        {% if current_user %}
+        <!-- ── Logged-in personalised hero ── -->
+        <h1 class="display-3 fw-bold mb-3 hero-title">
+            Welcome back, <span class="text-gradient">{{ current_user.full_name.split(' ')[0] }}!</span>
+        </h1>
+        <p class="lead text-secondary mx-auto mb-4" style="max-width:600px;">
+            Ready to build something amazing today? Check your dashboard for new hackathons,
+            explore projects, or update your skill profile.
+        </p>
+        <div class="d-flex gap-3 justify-content-center flex-wrap">
+            <a href="/hackathons/dashboard" class="btn btn-primary btn-lg px-4 btn-glow">
+                <i class="bi bi-grid me-1"></i>Dashboard
+            </a>
+            <a href="/profile" class="btn btn-outline-light btn-lg px-4">
+                <i class="bi bi-person me-1"></i>My Profile
+            </a>
+            <a href="/hackathons/create" class="btn btn-outline-light btn-lg px-4">
+                <i class="bi bi-plus-circle me-1"></i>New Hackathon
+            </a>
+        </div>
+        {% else %}
+        <!-- ── Guest marketing hero ── -->
+        <div class="mb-3">
+            <span class="badge bg-primary bg-opacity-25 text-primary-emphasis px-3 py-2 rounded-pill mb-4">
+                <i class="bi bi-lightning-charge-fill me-1"></i>Campus Collaboration Platform
+            </span>
+        </div>
+        <h1 class="display-3 fw-bold mb-3 hero-title">
+            Find Your <span class="text-gradient">Dream Team.</span><br>
+            Build Something <span class="text-gradient">Amazing.</span>
+        </h1>
+        <p class="lead text-secondary mx-auto mb-4" style="max-width:600px;">
+            N.E.S.T matches you with the perfect teammates based on skills,
+            interests, and complementary capabilities. Join hackathons, start projects,
+            and collaborate like never before.
+        </p>
+        <div class="d-flex gap-3 justify-content-center flex-wrap">
+            <a href="/auth/register" class="btn btn-primary btn-lg px-4 btn-glow">
+                <i class="bi bi-rocket-takeoff me-1"></i>Get Started — It's Free
+            </a>
+            <a href="/hackathons/dashboard" class="btn btn-outline-light btn-lg px-4">
+                <i class="bi bi-eye me-1"></i>Explore Opportunities
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     FEATURES
+     ═══════════════════════════════════════════════ -->
+<section class="mb-5">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold">Everything You Need to <span class="text-gradient">Collaborate</span></h2>
+        <p class="text-secondary">From finding teammates to winning hackathons</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 text-center p-4 feature-card">
+                <div class="feature-icon mb-3">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <h5 class="fw-bold">Smart Matching</h5>
+                <p class="text-secondary small mb-0">
+                    Our algorithm finds teammates whose skills complement yours — not just duplicate them.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 text-center p-4 feature-card">
+                <div class="feature-icon mb-3">
+                    <i class="bi bi-trophy-fill"></i>
+                </div>
+                <h5 class="fw-bold">Hackathons</h5>
+                <p class="text-secondary small mb-0">
+                    Browse upcoming hackathons, form teams, and track your progress all in one place.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 text-center p-4 feature-card">
+                <div class="feature-icon mb-3">
+                    <i class="bi bi-kanban-fill"></i>
+                </div>
+                <h5 class="fw-bold">Projects</h5>
+                <p class="text-secondary small mb-0">
+                    Start or join ongoing campus projects. Share repos, track contributions, build your portfolio.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 text-center p-4 feature-card">
+                <div class="feature-icon mb-3">
+                    <i class="bi bi-stars"></i>
+                </div>
+                <h5 class="fw-bold">Skill Profiles</h5>
+                <p class="text-secondary small mb-0">
+                    Showcase your capabilities, get verified badges, and let opportunities find you.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     HOW IT WORKS
+     ═══════════════════════════════════════════════ -->
+<section class="mb-5">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold">How It <span class="text-gradient">Works</span></h2>
+        <p class="text-secondary">Three steps to your dream team</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="text-center">
+                <div class="step-number">1</div>
+                <h5 class="fw-bold mt-3">Create Your Profile</h5>
+                <p class="text-secondary small">
+                    Sign in with Google or GitHub, add your skills, and set your archetype (Builder, Designer, Leader…).
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-center">
+                <div class="step-number">2</div>
+                <h5 class="fw-bold mt-3">Discover Opportunities</h5>
+                <p class="text-secondary small">
+                    Browse hackathons and projects on the dashboard. Filter by required skills to find the perfect fit.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-center">
+                <div class="step-number">3</div>
+                <h5 class="fw-bold mt-3">Build & Ship</h5>
+                <p class="text-secondary small">
+                    Form your team, collaborate, and build something incredible together. Rate teammates after each
+                    project.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     STATS
+     ═══════════════════════════════════════════════ -->
+<section class="mb-5">
+    <div class="stats-bar">
+        <div class="row text-center g-4">
+            <div class="col-6 col-md-3">
+                <h2 class="fw-bold text-gradient mb-0">{{ stats.users }}+</h2>
+                <small class="text-secondary">Students</small>
+            </div>
+            <div class="col-6 col-md-3">
+                <h2 class="fw-bold text-gradient mb-0">{{ stats.hackathons }}+</h2>
+                <small class="text-secondary">Hackathons</small>
+            </div>
+            <div class="col-6 col-md-3">
+                <h2 class="fw-bold text-gradient mb-0">{{ stats.projects }}+</h2>
+                <small class="text-secondary">Projects</small>
+            </div>
+            <div class="col-6 col-md-3">
+                <h2 class="fw-bold text-gradient mb-0">{{ stats.teams }}+</h2>
+                <small class="text-secondary">Teams Formed</small>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     CTA
+     ═══════════════════════════════════════════════ -->
+{% if not current_user %}
+<section class="text-center py-5 mb-4">
+    <div class="cta-section rounded-4 p-5">
+        <h2 class="fw-bold mb-3">Ready to Find Your Team?</h2>
+        <p class="text-secondary mb-4">Join N.E.S.T today — it takes 10 seconds with Google or GitHub.</p>
+        <a href="/auth/register" class="btn btn-primary btn-lg px-5 btn-glow">
+            <i class="bi bi-rocket-takeoff me-1"></i>Sign Up Now
+        </a>
+    </div>
+</section>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,166 @@
+/* ═══════════════════════════════════════════
+   N.E.S.T – Custom Styles
+   (Extends Bootstrap 5 dark theme)
+   ═══════════════════════════════════════════ */
+
+/* ── Root custom properties ── */
+:root {
+    --sc-primary: #6c5ce7;
+    --sc-accent: #00cec9;
+    --sc-bg-dark: #0f0f1a;
+    --sc-card-bg: #1a1a2e;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--sc-bg-dark);
+}
+
+main {
+    flex: 1;
+}
+
+/* ── Navbar tweaks ── */
+.navbar-brand {
+    font-size: 1.4rem;
+    letter-spacing: 0.03em;
+}
+
+/* ── Cards ── */
+.card {
+    background-color: var(--sc-card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 1rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(108, 92, 231, 0.25);
+}
+
+/* ── Match score badge ── */
+.badge-match {
+    background: linear-gradient(135deg, var(--sc-primary), var(--sc-accent));
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+/* ── Utilities ── */
+.text-gradient {
+    background: linear-gradient(135deg, var(--sc-primary), var(--sc-accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.btn-glow {
+    box-shadow: 0 0 15px rgba(108, 92, 231, 0.4);
+}
+
+.btn-glow:hover {
+    box-shadow: 0 0 25px rgba(108, 92, 231, 0.65);
+}
+
+/* ── Custom badge colours (not in Bootstrap) ── */
+.bg-purple {
+    background-color: #8854d0 !important;
+}
+
+.bg-purple.bg-opacity-75 {
+    background-color: rgba(136, 84, 208, 0.75) !important;
+}
+
+/* ═══════════════════════════════════════════
+   Landing Page — Hero
+   ═══════════════════════════════════════════ */
+.hero-section {
+    position: relative;
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+    overflow: hidden;
+}
+
+.hero-glow {
+    position: absolute;
+    top: -120px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(108, 92, 231, 0.2) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+    animation: hero-pulse 6s ease-in-out infinite alternate;
+}
+
+@keyframes hero-pulse {
+    from {
+        opacity: 0.6;
+        transform: translateX(-50%) scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(-50%) scale(1.1);
+    }
+}
+
+.hero-title {
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+}
+
+/* ── Feature cards ── */
+.feature-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 1rem;
+    background: linear-gradient(135deg, rgba(108, 92, 231, 0.15), rgba(0, 206, 201, 0.15));
+    font-size: 1.6rem;
+    color: var(--sc-accent);
+    transition: all 0.3s ease;
+}
+
+.feature-card:hover .feature-icon {
+    background: linear-gradient(135deg, var(--sc-primary), var(--sc-accent));
+    color: white;
+    transform: scale(1.1);
+}
+
+/* ── Steps ── */
+.step-number {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--sc-primary), var(--sc-accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: white;
+    box-shadow: 0 4px 20px rgba(108, 92, 231, 0.3);
+}
+
+/* ── Stats bar ── */
+.stats-bar {
+    background: var(--sc-card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 1rem;
+    padding: 2rem;
+}
+
+/* ── CTA section ── */
+.cta-section {
+    background: linear-gradient(135deg, rgba(108, 92, 231, 0.12), rgba(0, 206, 201, 0.08));
+    border: 1px solid rgba(108, 92, 231, 0.2);
+    backdrop-filter: blur(20px);
+}

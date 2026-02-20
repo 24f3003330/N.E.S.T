@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}N.E.S.T{% endblock %}</title>
+
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        crossorigin="anonymous" />
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css" />
+
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+    <!-- ═══ Navbar ═══ -->
+    <nav class="navbar navbar-expand-lg bg-body-tertiary shadow-sm sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-mortarboard-fill me-2 text-primary"></i>N.E.S.T
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarMain">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hackathons/dashboard">
+                            <i class="bi bi-grid me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/teams">
+                            <i class="bi bi-people me-1"></i>Teams
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/match">
+                            <i class="bi bi-stars me-1"></i>Match
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/graph">
+                            <i class="bi bi-diagram-3 me-1"></i>Network
+                        </a>
+                    </li>
+                </ul>
+
+                <ul class="navbar-nav">
+                    {% if current_user %}
+                    <!-- 🔔 Notification Bell -->
+                    <li class="nav-item dropdown me-2" id="notif-dropdown">
+                        <a class="nav-link position-relative" href="#" role="button" id="notifBell"
+                            onclick="toggleNotifPanel(event)">
+                            <i class="bi bi-bell-fill fs-5"></i>
+                            <span
+                                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none"
+                                id="notif-badge" style="font-size: .65rem;">0</span>
+                        </a>
+                        <!-- Notification dropdown panel -->
+                        <div class="dropdown-menu dropdown-menu-end shadow-lg p-0 border-secondary" id="notif-panel"
+                            style="width: 360px; max-height: 440px; overflow-y: auto; display: none; position: absolute; right: 0; z-index: 1050;">
+                            <div
+                                class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom border-secondary border-opacity-25">
+                                <h6 class="mb-0 fw-bold small">Notifications</h6>
+                                <button class="btn btn-link btn-sm text-decoration-none p-0" onclick="markAllRead()"
+                                    id="mark-all-btn" style="font-size: .75rem;">
+                                    Mark all as read
+                                </button>
+                            </div>
+                            <div id="notif-list">
+                                <div class="text-center text-secondary py-4 small">Loading...</div>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/profile">
+                            <i class="bi bi-person-circle me-1"></i>{{ current_user.full_name }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-danger" href="/auth/logout">
+                            <i class="bi bi-box-arrow-right me-1"></i>Logout
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/profile">
+                            <i class="bi bi-person-circle me-1"></i>Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/auth/login">
+                            <i class="bi bi-box-arrow-in-right me-1"></i>Login
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-primary btn-sm text-white ms-2 px-3" href="/auth/register">
+                            Sign Up
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ═══ Messages ═══ -->
+    <div class="container mt-3">
+        {% block messages %}{% endblock %}
+    </div>
+
+    <!-- ═══ Main content ═══ -->
+    <main class="container py-4">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- ═══ Footer ═══ -->
+    <footer class="bg-body-tertiary text-center py-4 mt-auto border-top">
+        <div class="container">
+            <p class="text-secondary mb-0">
+                &copy; 2026 N.E.S.T &mdash; Campus Collaboration Platform
+            </p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        crossorigin="anonymous"></script>
+
+    <!-- Custom JS -->
+    <script src="/static/js/main.js"></script>
+
+    {% block extra_scripts %}{% endblock %}
+
+    {% if current_user %}
+    <script>
+        /* ── Notification Center ── */
+        (function () {
+            const badge = document.getElementById('notif-badge');
+            const panel = document.getElementById('notif-panel');
+            const list = document.getElementById('notif-list');
+            if (!badge) return;
+
+            let panelOpen = false;
+
+            window.toggleNotifPanel = function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                panelOpen = !panelOpen;
+                panel.style.display = panelOpen ? 'block' : 'none';
+                if (panelOpen) fetchNotifs();
+            };
+
+            document.addEventListener('click', function (e) {
+                if (panelOpen && !panel.contains(e.target) && e.target.id !== 'notifBell') {
+                    panelOpen = false;
+                    panel.style.display = 'none';
+                }
+            });
+
+            function timeAgo(dateStr) {
+                if (!dateStr) return '';
+                const d = new Date(dateStr.endsWith('Z') ? dateStr : dateStr + 'Z');
+                const diff = Math.floor((Date.now() - d.getTime()) / 1000);
+                if (diff < 60) return 'just now';
+                if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+                if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+                return Math.floor(diff / 86400) + 'd ago';
+            }
+
+            function renderNotifs(data) {
+                const n = data.notifications;
+                badge.textContent = data.unread_count;
+                if (data.unread_count > 0) {
+                    badge.classList.remove('d-none');
+                } else {
+                    badge.classList.add('d-none');
+                }
+                if (n.length === 0) {
+                    list.innerHTML = '<div class="text-center text-secondary py-4 small">No notifications yet</div>';
+                    return;
+                }
+                list.innerHTML = n.map(function (item) {
+                    const cls = item.is_read ? 'opacity-50' : '';
+                    return '<form action="/notifications/read/' + item.id + '" method="POST" class="m-0">' +
+                        '<button type="submit" class="dropdown-item d-flex align-items-start gap-2 px-3 py-2 border-bottom border-secondary border-opacity-10 text-wrap ' + cls + '" style="white-space:normal;">' +
+                        '<i class="bi bi-circle-fill mt-1 ' + (item.is_read ? 'text-secondary' : 'text-primary') + '" style="font-size:.5rem;flex-shrink:0;"></i>' +
+                        '<div class="small">' + item.message + '<br><span class="text-secondary" style="font-size:.7rem;">' + timeAgo(item.created_at) + '</span></div>' +
+                        '</button></form>';
+                }).join('');
+            }
+
+            function fetchNotifs() {
+                fetch('/notifications')
+                    .then(function (r) { return r.json(); })
+                    .then(renderNotifs)
+                    .catch(function () { });
+            }
+
+            window.markAllRead = function () {
+                fetch('/notifications/read-all', { method: 'POST' })
+                    .then(function () { fetchNotifs(); });
+            };
+
+            fetchNotifs();
+            setInterval(fetchNotifs, 30000);
+        })();
+    </script>
+    {% endif %}
+</body>
+
+</html>
