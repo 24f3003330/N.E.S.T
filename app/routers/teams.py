@@ -385,68 +385,74 @@ async def respond_invitation(
         raise HTTPException(status_code=403, detail="Not authorized to respond to this invitation.")
 
     if action == "accept":
-        inv.status = "Accepted"
-        # Determine who is the new member
-        inv_dir = str(getattr(inv.direction, 'value', inv.direction))
-        new_member_id = inv.to_user_id if inv_dir == "Invite" else inv.from_user_id
-        
-        # Check if they are already on the team to prevent duplicates
-        mem_check = await db.execute(
-            select(TeamMembership).where(
-                TeamMembership.team_id == inv.team_id,
-                TeamMembership.user_id == new_member_id,
-                TeamMembership.left_at.is_(None)
-            )
-        )
-        if not mem_check.scalar_one_or_none():
-            # Check team size limit explicitly handling None
-            current_members_result = await db.execute(
-                select(func.count(TeamMembership.user_id)).where(
+        try:
+            inv.status = "Accepted"
+            inv_dir = str(getattr(inv.direction, 'value', inv.direction))
+            new_member_id = inv.to_user_id if inv_dir == "Invite" else inv.from_user_id
+            
+            mem_check = await db.execute(
+                select(TeamMembership).where(
                     TeamMembership.team_id == inv.team_id,
+                    TeamMembership.user_id == new_member_id,
                     TeamMembership.left_at.is_(None)
                 )
             )
-            current_count = current_members_result.scalar() or 0
-            if team.max_size is not None and current_count >= team.max_size:
-                raise HTTPException(status_code=400, detail="Team is already at maximum capacity.")
+            if not mem_check.scalar_one_or_none():
+                current_members_result = await db.execute(
+                    select(func.count(TeamMembership.user_id)).where(
+                        TeamMembership.team_id == inv.team_id,
+                        TeamMembership.left_at.is_(None)
+                    )
+                )
+                current_count = current_members_result.scalar() or 0
+                if team.max_size is not None and current_count >= team.max_size:
+                    raise HTTPException(status_code=400, detail="Team is already at maximum capacity.")
+                    
+                membership = TeamMembership(team_id=inv.team_id, user_id=new_member_id, role="Member")
+                db.add(membership)
                 
-            membership = TeamMembership(team_id=inv.team_id, user_id=new_member_id)
-            db.add(membership)
+            from app.models.notification import Notification
+            team_result2 = await db.execute(select(Team).where(Team.id == inv.team_id))
+            team_for_notif = team_result2.scalar_one_or_none()
+            team_name = team_for_notif.name if (team_for_notif and getattr(team_for_notif, 'name', None)) else "the team"
+            user_name = current_user.full_name if getattr(current_user, 'full_name', None) else "A user"
+
+            other_user_id = inv.from_user_id if is_recipient else inv.to_user_id
+            
+            notif = Notification(
+                user_id=other_user_id,
+                message=f"✅ {user_name} accepted your request/invite for <b>{team_name}</b>",
+                link=f"/teams/{inv.team_id}",
+            )
+            db.add(notif)
+            await db.commit()
+        except Exception as e:
+            await db.rollback()
+            raise HTTPException(status_code=500, detail=f"Database error during accept: {str(e)}")
+
     elif action == "decline":
-        inv.status = "Declined"
+        try:
+            inv.status = "Declined"
+            
+            from app.models.notification import Notification
+            team_result2 = await db.execute(select(Team).where(Team.id == inv.team_id))
+            team_for_notif = team_result2.scalar_one_or_none()
+            team_name = team_for_notif.name if (team_for_notif and getattr(team_for_notif, 'name', None)) else "the team"
+            user_name = current_user.full_name if getattr(current_user, 'full_name', None) else "A user"
 
-    # ── Notify the other party about the response ──
-    from app.models.notification import Notification
-    
-    team_result2 = await db.execute(select(Team).where(Team.id == inv.team_id))
-    team_for_notif = team_result2.scalar_one_or_none()
-    team_name = team_for_notif.name if (team_for_notif and team_for_notif.name) else "the team"
-    user_name = current_user.full_name if current_user.full_name else "A user"
-    
-    if is_recipient:
-        # The recipient responded (accepted or declined).
-        # Notify the sender.
-        other_user_id = inv.from_user_id
-        action_word = "accepted" if action == "accept" else "declined"
-        emoji = "✅" if action == "accept" else "❌"
-        notif = Notification(
-            user_id=other_user_id,
-            message=f"{emoji} {user_name} {action_word} your request/invite for <b>{team_name}</b>",
-            link=f"/teams/{inv.team_id}",
-        )
-        db.add(notif)
-    elif is_sender and action == "decline":
-        # The sender revoked their invite/request.
-        # Notify the recipient.
-        other_user_id = inv.to_user_id
-        notif = Notification(
-            user_id=other_user_id,
-            message=f"❌ {user_name} revoked their request/invite for <b>{team_name}</b>",
-            link=f"/teams/{inv.team_id}",
-        )
-        db.add(notif)
+            other_user_id = inv.from_user_id if is_recipient else inv.to_user_id
+            
+            notif = Notification(
+                user_id=other_user_id,
+                message=f"❌ {user_name} declined/revoked the request/invite for <b>{team_name}</b>",
+                link=f"/teams/{inv.team_id}",
+            )
+            db.add(notif)
+            await db.commit()
+        except Exception as e:
+            await db.rollback()
+            raise HTTPException(status_code=500, detail=f"Database error during decline: {str(e)}")
 
-    await db.commit()
     return RedirectResponse(url=f"/teams/{inv.team_id}", status_code=status.HTTP_303_SEE_OTHER)
 
 
