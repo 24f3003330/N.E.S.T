@@ -10,10 +10,19 @@ from sqlalchemy.orm import DeclarativeBase
 from app.config import settings
 
 # ── Engine ──
+engine_kwargs = {
+    "echo": settings.DEBUG,
+    "future": True,
+}
+
+# If using PostgreSQL (Render/Supabase), disable prepared statement caching
+# because PgBouncer (transaction mode) does not support it properly.
+if "postgresql" in settings.DATABASE_URL:
+    engine_kwargs["connect_args"] = {"statement_cache_size": 0}
+
 engine = create_async_engine(
     settings.DATABASE_URL,
-    echo=settings.DEBUG,
-    future=True,
+    **engine_kwargs
 )
 
 # ── Session factory ──
