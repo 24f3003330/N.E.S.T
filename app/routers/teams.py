@@ -385,9 +385,9 @@ async def respond_invitation(
         raise HTTPException(status_code=403, detail="Not authorized to respond to this invitation.")
 
     if action == "accept":
-        inv.status = InvitationStatus.Accepted
+        inv.status = "Accepted"
         # Determine who is the new member
-        inv_dir = getattr(inv.direction, 'value', inv.direction)
+        inv_dir = str(getattr(inv.direction, 'value', inv.direction))
         new_member_id = inv.to_user_id if inv_dir == "Invite" else inv.from_user_id
         
         # Check if they are already on the team to prevent duplicates
@@ -399,7 +399,7 @@ async def respond_invitation(
             )
         )
         if not mem_check.scalar_one_or_none():
-            # Check team size limit
+            # Check team size limit explicitly handling None
             current_members_result = await db.execute(
                 select(func.count(TeamMembership.user_id)).where(
                     TeamMembership.team_id == inv.team_id,
@@ -407,20 +407,21 @@ async def respond_invitation(
                 )
             )
             current_count = current_members_result.scalar() or 0
-            if team.max_size and current_count >= team.max_size:
+            if team.max_size is not None and current_count >= team.max_size:
                 raise HTTPException(status_code=400, detail="Team is already at maximum capacity.")
                 
             membership = TeamMembership(team_id=inv.team_id, user_id=new_member_id)
             db.add(membership)
     elif action == "decline":
-        inv.status = InvitationStatus.Declined
+        inv.status = "Declined"
 
     # ── Notify the other party about the response ──
     from app.models.notification import Notification
     
     team_result2 = await db.execute(select(Team).where(Team.id == inv.team_id))
     team_for_notif = team_result2.scalar_one_or_none()
-    team_name = team_for_notif.name if team_for_notif else "the team"
+    team_name = team_for_notif.name if (team_for_notif and team_for_notif.name) else "the team"
+    user_name = current_user.full_name if current_user.full_name else "A user"
     
     if is_recipient:
         # The recipient responded (accepted or declined).
@@ -430,7 +431,7 @@ async def respond_invitation(
         emoji = "✅" if action == "accept" else "❌"
         notif = Notification(
             user_id=other_user_id,
-            message=f"{emoji} {current_user.full_name} {action_word} your request/invite for <b>{team_name}</b>",
+            message=f"{emoji} {user_name} {action_word} your request/invite for <b>{team_name}</b>",
             link=f"/teams/{inv.team_id}",
         )
         db.add(notif)
@@ -440,7 +441,7 @@ async def respond_invitation(
         other_user_id = inv.to_user_id
         notif = Notification(
             user_id=other_user_id,
-            message=f"❌ {current_user.full_name} revoked their request/invite for <b>{team_name}</b>",
+            message=f"❌ {user_name} revoked their request/invite for <b>{team_name}</b>",
             link=f"/teams/{inv.team_id}",
         )
         db.add(notif)
