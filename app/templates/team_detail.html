@@ -37,14 +37,14 @@
             </div>
         </div>
 
-        <div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
             <!-- Members: Launch Chat -->
             {% if user_role %}
-            <a href="/chat/{{ team.id }}" class="btn btn-outline-info me-2">
+            <a href="/chat/{{ team.id }}" class="btn btn-outline-info">
                 <i class="bi bi-chat-dots-fill me-1"></i>Team Chat
             </a>
-            <form action="/ideajam/start/{{ team.id }}" method="POST" class="d-inline d-flex align-items-center gap-2">
-                <select name="duration" class="form-select form-select-sm" style="width: auto; min-width: 120px;">
+            <form action="/ideajam/start/{{ team.id }}" method="POST" class="d-inline-flex align-items-center gap-2">
+                <select name="duration" class="form-select form-select-sm" style="width: auto; min-width: 100px;">
                     <option value="2">2 min</option>
                     <option value="5">5 min</option>
                     <option value="10" selected>10 min</option>
@@ -61,7 +61,7 @@
 
             {% if my_pending_invite %}
             <!-- User was invited by the lead -->
-            <div class="d-inline-flex align-items-center gap-2 me-2">
+            <div class="d-inline-flex align-items-center gap-2">
                 <span class="text-warning small fw-bold me-2"><i class="bi bi-envelope-paper me-1"></i>You were
                     invited!</span>
                 <form action="/teams/invitation/{{ my_pending_invite.id }}/respond" method="POST" class="d-inline">

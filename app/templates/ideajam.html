@@ -123,7 +123,7 @@
 
     .char-counter {
         font-size: .75rem;
-        color: rgba(255, 255, 255, .4);
+        color: rgba(0, 0, 0, .4);
     }
 
     .char-counter.near-limit {
@@ -136,7 +136,7 @@
 
     /* ── Status badge ── */
     .jam-status-active {
-        background: linear-gradient(135deg, #22d3ee, #6366f1);
+        background: linear-gradient(135deg, #0d9488, #38bdf8);
         -webkit-background-clip: text;
         background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -448,14 +448,12 @@
         function onJamEnd() {
             submitSection.style.display = "none";
 
+            // Always show the export/lead-actions section when jam ends
+            exportSection.classList.remove("d-none");
+
             if (!hasSubmittedSurvey) {
-                // If they haven't submitted the survey, hide the ideas list and show the survey
-                document.getElementById("ideasList").parentElement?.previousElementSibling.classList.add("d-none");
-                ideasList.classList.add("d-none");
+                // Also show the survey if not yet submitted
                 surveySection.classList.remove("d-none");
-            } else {
-                // Otherwise, show export section and leave ideas list visible
-                exportSection.classList.remove("d-none");
             }
 
             fetchEntries();
@@ -514,7 +512,7 @@
                                     </button>
                                 </div>
                             </div>
-                            <p class="mb-0 mt-1" style="color: #e0e0e0;">${escapeHtml(e.idea_text)}</p>
+                            <p class="mb-0 mt-1" style="color: #64748b;">${escapeHtml(e.idea_text)}</p>
                         </div>
                     </div>
                 </div>
