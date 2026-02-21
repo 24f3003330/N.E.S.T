@@ -242,7 +242,7 @@
     <div id="exportSection" class="text-center mt-4 d-none">
 
         {% if current_user.id == team.lead_id %}
-        <div class="mb-4 p-3 border border-primary border-opacity-25 rounded bg-dark bg-opacity-50">
+        <div class="mb-4 p-3 border border-primary border-opacity-25 rounded">
             <h6 class="fw-bold mb-2 text-primary"><i class="bi bi-shield-lock me-2"></i>Finalize Team</h6>
             <p class="small text-secondary mb-3">Review the ideas above. Once everyone has completed the survey, click
                 below to form your final team. Mismatched members will be removed and the team will be locked for the
@@ -288,11 +288,10 @@
                 </div>
 
                 <div class="mb-4">
-                    <label for="avoid_member_id" class="form-label text-light">Opt-Out: Is there anyone you'd prefer NOT
+                    <label for="avoid_member_id" class="form-label">Opt-Out: Is there anyone you'd prefer NOT
                         to
                         continue working with? (Optional)</label>
-                    <select class="form-select bg-dark text-light border-secondary" id="avoid_member_id"
-                        name="avoid_member_id">
+                    <select class="form-select" id="avoid_member_id" name="avoid_member_id">
                         <option value="">No, I'm happy with everyone.</option>
                         {% for tm in teammates %}
                         <option value="{{ tm.id }}">{{ tm.full_name }}</option>
@@ -308,13 +307,13 @@
                         <div class="row g-2">
                             {% for tm in teammates %}
                             <div class="col-12 col-md-6">
-                                <div class="p-2 rounded bg-dark border border-secondary border-opacity-25 h-100">
-                                    <div class="fw-bold text-light mb-1">{{ tm.full_name }}</div>
+                                <div class="p-2 rounded border h-100">
+                                    <div class="fw-bold mb-1">{{ tm.full_name }}</div>
                                     <div class="small text-muted mb-2"><i class="bi bi-building me-1"></i>{{
                                         teammate_profiles[tm.id].department }}</div>
                                     <div>
                                         {% for cap in teammate_profiles[tm.id].capabilities %}
-                                        <span class="badge bg-secondary bg-opacity-50 text-light me-1 mb-1"
+                                        <span class="badge bg-secondary bg-opacity-50 me-1 mb-1"
                                             style="font-size: 0.7rem;">{{ cap }}</span>
                                         {% endfor %}
                                         {% if not teammate_profiles[tm.id].capabilities %}

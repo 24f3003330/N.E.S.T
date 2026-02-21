@@ -162,8 +162,8 @@
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label small text-secondary mb-1">Feedback (Optional)</label>
-                                        <textarea class="form-control form-control-sm bg-dark bg-opacity-50"
-                                            name="feedback" rows="2" placeholder="Great teamwork..."></textarea>
+                                        <textarea class="form-control form-control-sm" name="feedback" rows="2"
+                                            placeholder="Great teamwork..."></textarea>
                                     </div>
                                     <button type="submit" class="btn btn-warning btn-sm w-100">
                                         <i class="bi bi-send me-1"></i>Submit Evaluation
@@ -231,7 +231,7 @@
                             <span class="small fw-bold">{{ usr.full_name }}</span>
                             {% if usr.github_username %}
                             <a href="https://github.com/{{ usr.github_username }}" target="_blank"
-                                class="badge bg-dark text-decoration-none">
+                                class="badge bg-light text-dark border text-decoration-none">
                                 <i class="bi bi-github me-1"></i>{{ usr.github_username }}
                             </a>
                             {% else %}
@@ -274,8 +274,7 @@
                 <h6 class="fw-bold fs-7 mb-2">Invite Member</h6>
                 <form action="/teams/{{ team.id }}/invite" method="POST" class="mb-4">
                     <div class="input-group mb-2">
-                        <input type="email" name="email" class="form-control bg-dark border-secondary bg-opacity-50"
-                            placeholder="User's email" required>
+                        <input type="email" name="email" class="form-control" placeholder="User's email" required>
                         <button class="btn btn-primary" type="submit"><i class="bi bi-send"></i></button>
                     </div>
                 </form>
@@ -340,10 +339,10 @@
 <!-- Request to Join Modal -->
 <div class="modal fade" id="requestJoinModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content bg-dark border-secondary">
+        <div class="modal-content">
             <div class="modal-header border-secondary border-opacity-25">
                 <h5 class="modal-title fw-bold">Request to Join</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form action="/teams/request/{{ team.id }}" method="POST">
                 <div class="modal-body">
@@ -364,10 +363,10 @@
 <!-- Leave Team Confirm Modal -->
 <div class="modal fade" id="leaveTeamModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content bg-dark border-secondary">
+        <div class="modal-content">
             <div class="modal-header border-secondary border-opacity-25">
                 <h5 class="modal-title fw-bold text-danger">Leave Team</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to leave <strong>{{ team.name }}</strong>?</p>

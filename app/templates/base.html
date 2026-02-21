@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
+<html lang="en" data-bs-theme="light">
 
 <head>
     <meta charset="UTF-8" />
@@ -23,7 +23,7 @@
     <nav class="navbar navbar-expand-lg bg-body-tertiary shadow-sm sticky-top">
         <div class="container">
             <a class="navbar-brand fw-bold" href="/">
-                <i class="bi bi-mortarboard-fill me-2 text-primary"></i>N.E.S.T
+                <i class="bi bi-mortarboard-fill me-2" style="color: var(--sc-primary);"></i>N.E.S.T
             </a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
@@ -87,7 +87,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-danger" href="/auth/logout">
+                        <a class="nav-link" href="/auth/logout" style="color: #dc3545 !important;">
                             <i class="bi bi-box-arrow-right me-1"></i>Logout
                         </a>
                     </li>
@@ -103,7 +103,8 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link btn btn-primary btn-sm text-white ms-2 px-3" href="/auth/register">
+                        <a class="nav-link btn btn-sm text-white ms-2 px-3" href="/auth/register"
+                            style="background-color: var(--sc-primary);">
                             Sign Up
                         </a>
                     </li>
@@ -124,9 +125,9 @@
     </main>
 
     <!-- ═══ Footer ═══ -->
-    <footer class="bg-body-tertiary text-center py-4 mt-auto border-top">
+    <footer class="text-center py-4 mt-auto">
         <div class="container">
-            <p class="text-secondary mb-0">
+            <p class="mb-0" style="color: var(--sc-text-muted);">
                 &copy; 2026 N.E.S.T &mdash; Campus Collaboration Platform
             </p>
         </div>

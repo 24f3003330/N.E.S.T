@@ -2,11 +2,11 @@
 <div class="row g-3">
     {% for s in suggestions %}
     <div class="col-md-6 col-lg-4">
-        <div class="card h-100 border-secondary border-opacity-25 hover-glow shadow-sm bg-dark">
+        <div class="card h-100 border-0 hover-glow shadow-sm">
             <div class="card-body">
                 <!-- Header: Name & Archetype -->
                 <div class="d-flex justify-content-between align-items-start mb-2">
-                    <h5 class="fw-bold mb-0 text-white">{{ s.user.full_name }}</h5>
+                    <h5 class="fw-bold mb-0">{{ s.user.full_name }}</h5>
                     {% if s.user.archetype %}
                     <span class="badge bg-secondary bg-opacity-50 border border-secondary">{{ s.user.archetype.value
                         }}</span>
@@ -18,8 +18,8 @@
                 <!-- Match Score Progress Bar -->
                 <div class="mb-3">
                     <div class="d-flex justify-content-between mb-1">
-                        <small class="text-white fw-bold">Match Score</small>
-                        <small class="text-white fw-bold">{{ s.score_data.score }}%</small>
+                        <small class="fw-bold">Match Score</small>
+                        <small class="fw-bold">{{ s.score_data.score }}%</small>
                     </div>
                     <div class="progress" style="height: 8px;">
                         {% set p_color = "bg-success" if s.score_data.score >= 70 else ("bg-warning" if
@@ -38,7 +38,7 @@
 
                 {% if s.score_data.matching_capabilities %}
                 <div class="mb-3">
-                    <small class="text-white d-block mb-1">Matching Skills:</small>
+                    <small class="d-block mb-1">Matching Skills:</small>
                     <div class="d-flex flex-wrap gap-1">
                         {% for cap in s.score_data.matching_capabilities %}
                         <span class="badge bg-success bg-opacity-25 text-success">{{ cap }}</span>

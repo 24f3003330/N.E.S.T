@@ -148,7 +148,8 @@
                         {% if cap.is_verified %}<i class="bi bi-check-circle-fill text-white" title="Verified"></i>{%
                         endif %}
                         {{ cap.name }}
-                        <span class="badge bg-dark bg-opacity-50 ms-1 fw-normal small">{{ cap.proficiency_level.value
+                        <span class="badge bg-light text-dark border ms-1 fw-normal small">{{
+                            cap.proficiency_level.value
                             }}</span>
 
                         {% if is_owner %}

@@ -12,8 +12,9 @@
         min-height: 500px;
         border-radius: 16px;
         overflow: hidden;
-        background: linear-gradient(135deg, #0f1923 0%, #1a1a2e 50%, #16213e 100%);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, .4);
+        background: linear-gradient(135deg, #e8f0fe 0%, #f0f4ff 50%, #f5f7ff 100%);
+        box-shadow: 0 4px 24px rgba(0, 0, 0, .08);
+        border: 1px solid rgba(0, 0, 0, .06);
     }
 
     .graph-wrapper svg {
@@ -37,38 +38,38 @@
     .graph-controls .form-control,
     .graph-controls .form-select {
         max-width: 200px;
-        background: rgba(255, 255, 255, .06);
-        border: 1px solid rgba(255, 255, 255, .12);
-        color: #e0e0e0;
+        background: rgba(255, 255, 255, .8);
+        border: 1px solid rgba(0, 0, 0, .1);
+        color: #1e293b;
         backdrop-filter: blur(12px);
         font-size: .85rem;
     }
 
     .graph-controls .form-control::placeholder {
-        color: rgba(255, 255, 255, .4);
+        color: rgba(0, 0, 0, .4);
     }
 
     .graph-controls .form-control:focus,
     .graph-controls .form-select:focus {
-        background: rgba(255, 255, 255, .1);
-        border-color: rgba(99, 179, 237, .5);
-        box-shadow: 0 0 0 .2rem rgba(99, 179, 237, .15);
-        color: #fff;
+        background: rgba(255, 255, 255, .95);
+        border-color: rgba(13, 148, 136, .5);
+        box-shadow: 0 0 0 .2rem rgba(13, 148, 136, .15);
+        color: #1e293b;
     }
 
     /* ── Tooltip ── */
     .graph-tooltip {
         position: absolute;
         pointer-events: none;
-        background: rgba(15, 25, 40, .92);
+        background: rgba(255, 255, 255, .95);
         backdrop-filter: blur(16px);
-        border: 1px solid rgba(99, 179, 237, .3);
+        border: 1px solid rgba(13, 148, 136, .2);
         border-radius: 12px;
         padding: 14px 18px;
         font-size: .82rem;
-        color: #e0e0e0;
+        color: #1e293b;
         min-width: 180px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, .5);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, .1);
         opacity: 0;
         transition: opacity .2s;
         z-index: 20;
@@ -79,13 +80,13 @@
     }
 
     .graph-tooltip h6 {
-        color: #63b3ed;
+        color: #0d9488;
         margin-bottom: 6px;
         font-weight: 700;
     }
 
     .graph-tooltip .tt-label {
-        color: rgba(255, 255, 255, .5);
+        color: rgba(0, 0, 0, .5);
         font-size: .75rem;
         text-transform: uppercase;
         letter-spacing: .5px;
@@ -102,9 +103,9 @@
         right: 0;
         width: 320px;
         height: 100%;
-        background: rgba(15, 25, 40, .95);
+        background: rgba(255, 255, 255, .95);
         backdrop-filter: blur(20px);
-        border-left: 1px solid rgba(99, 179, 237, .2);
+        border-left: 1px solid rgba(13, 148, 136, .15);
         transform: translateX(100%);
         transition: transform .35s cubic-bezier(.4, 0, .2, 1);
         z-index: 15;
@@ -122,13 +123,13 @@
         right: 12px;
         background: none;
         border: none;
-        color: #e0e0e0;
+        color: #1e293b;
         font-size: 1.2rem;
         cursor: pointer;
     }
 
     .profile-sidebar h5 {
-        color: #63b3ed;
+        color: #0d9488;
         font-weight: 700;
     }
 
@@ -148,7 +149,7 @@
         align-items: center;
         gap: 6px;
         font-size: .75rem;
-        color: rgba(255, 255, 255, .6);
+        color: rgba(0, 0, 0, .5);
     }
 
     .legend-dot {

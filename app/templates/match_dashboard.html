@@ -14,7 +14,7 @@
     <div class="row g-4 mb-5">
         <!-- Find Teams (For Members) -->
         <div class="col-md-6">
-            <div class="card h-100 border-info border-opacity-50 hover-glow shadow bg-dark">
+            <div class="card h-100 border-0 hover-glow shadow">
                 <div class="card-body p-5 text-center">
                     <div class="mb-4">
                         <i class="bi bi-search text-info" style="font-size: 3rem;"></i>
@@ -28,14 +28,13 @@
                             data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-magic me-2"></i>Match Me with Teams
                         </button>
-                        <ul class="dropdown-menu w-100 bg-dark border-secondary">
+                        <ul class="dropdown-menu w-100">
                             <li>
                                 <h6 class="dropdown-header text-secondary">Select a Hackathon</h6>
                             </li>
                             {% if hackathons %}
                             {% for h in hackathons %}
-                            <li><a class="dropdown-item text-white hover-bg-secondary"
-                                    href="/match/teams-for-me/{{ h.id }}">{{ h.title }}</a></li>
+                            <li><a class="dropdown-item" href="/match/teams-for-me/{{ h.id }}">{{ h.title }}</a></li>
                             {% endfor %}
                             {% else %}
                             <li><span class="dropdown-item text-muted">No active hackathons found.</span></li>
@@ -48,7 +47,7 @@
 
         <!-- Find Members (For Leaders) -->
         <div class="col-md-6">
-            <div class="card h-100 border-primary border-opacity-50 hover-glow shadow bg-dark">
+            <div class="card h-100 border-0 hover-glow shadow">
                 <div class="card-body p-5 text-center">
                     <div class="mb-4">
                         <i class="bi bi-person-plus text-primary" style="font-size: 3rem;"></i>
@@ -62,14 +61,14 @@
                             data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-people me-2"></i>Match Me with Users
                         </button>
-                        <ul class="dropdown-menu w-100 bg-dark border-secondary">
+                        <ul class="dropdown-menu w-100">
                             <li>
                                 <h6 class="dropdown-header text-secondary">Select Your Team</h6>
                             </li>
                             {% if my_teams %}
                             {% for t in my_teams %}
-                            <li><a class="dropdown-item text-white hover-bg-secondary"
-                                    href="/teams/{{ t.id }}#suggestions-container">{{ t.name }}</a></li>
+                            <li><a class="dropdown-item" href="/teams/{{ t.id }}#suggestions-container">{{ t.name }}</a>
+                            </li>
                             {% endfor %}
                             {% else %}
                             <li><span class="dropdown-item text-muted">You are not leading any forming teams.</span>
