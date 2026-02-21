@@ -1,10 +1,10 @@
 """
-ChatGPT-backed Vibe Analysis Service.
+Gemini-backed Vibe Analysis Service.
 
 Analyses a user's personality, collaboration style, and skills
-based on their username/email using OpenAI's ChatGPT API.
+based on their username/email using Google's Gemini API.
 
-Falls back to a smart local analysis when no OPENAI_API_KEY is set.
+Falls back to a smart local analysis when no GEMINI_API_KEY is set.
 """
 
 import hashlib
@@ -16,7 +16,7 @@ from functools import lru_cache
 
 logger = logging.getLogger(__name__)
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 
 # ── Personality trait pools for local fallback ──
 TRAIT_POOLS = {
@@ -122,9 +122,9 @@ def _analyse_locally(email: str, username: str) -> Dict[str, Any]:
     }
 
 
-async def _analyse_with_chatgpt(email: str, username: str) -> Dict[str, Any]:
+async def _analyse_with_gemini(email: str, username: str) -> Dict[str, Any]:
     """
-    Uses OpenAI's ChatGPT API to analyse a user's likely personality
+    Uses Google's Gemini API to analyse a user's likely personality
     and collaboration style based on their email/username.
     """
     try:
@@ -144,26 +144,26 @@ Based on their email domain, username patterns, and likely academic background, 
 Respond ONLY in this exact JSON format, no markdown:
 {{"skills": [...], "vibe_tags": [...], "collab_style": "...", "personality_summary": "...", "experience_years": N}}"""
 
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
+
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.post(
-                "https://api.openai.com/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {OPENAI_API_KEY}",
-                    "Content-Type": "application/json",
-                },
+                url,
+                headers={"Content-Type": "application/json"},
                 json={
-                    "model": "gpt-3.5-turbo",
-                    "messages": [
-                        {"role": "system", "content": "You are a team compatibility analyst for a campus collaboration platform. Provide concise JSON responses."},
-                        {"role": "user", "content": prompt},
-                    ],
-                    "temperature": 0.7,
-                    "max_tokens": 300,
+                    "contents": [{
+                        "parts": [{"text": prompt}]
+                    }],
+                    "generationConfig": {
+                        "temperature": 0.7,
+                        "maxOutputTokens": 300,
+                        "responseMimeType": "application/json",
+                    },
                 },
             )
             resp.raise_for_status()
             data = resp.json()
-            content = data["choices"][0]["message"]["content"].strip()
+            content = data["candidates"][0]["content"]["parts"][0]["text"].strip()
 
             # Parse JSON response
             result = json.loads(content)
@@ -172,7 +172,7 @@ Respond ONLY in this exact JSON format, no markdown:
             return result
 
     except Exception as e:
-        logger.warning(f"ChatGPT API call failed ({e}), falling back to local analysis")
+        logger.warning(f"Gemini API call failed ({e}), falling back to local analysis")
         return _analyse_locally(email, username)
 
 
@@ -186,7 +186,7 @@ async def analyse_user_vibe(email: str = "", username: str = "", use_cache: bool
     """
     Analyse a user's personality and collaboration vibe.
 
-    Uses ChatGPT API when OPENAI_API_KEY is set, otherwise falls back
+    Uses Gemini API when GEMINI_API_KEY is set, otherwise falls back
     to smart local analysis based on email/username patterns.
 
     Returns dict with: skills, vibe_tags, collab_style, personality_summary,
@@ -197,8 +197,8 @@ async def analyse_user_vibe(email: str = "", username: str = "", use_cache: bool
     if use_cache and cache_key in _analysis_cache:
         return _analysis_cache[cache_key]
 
-    if OPENAI_API_KEY:
-        result = await _analyse_with_chatgpt(email, username)
+    if GEMINI_API_KEY:
+        result = await _analyse_with_gemini(email, username)
     else:
         result = _analyse_locally(email, username)
 
