@@ -505,6 +505,12 @@
             if (!text) return;
 
             submitBtn.disabled = true;
+
+            // Eager clear
+            ideaInput.value = "";
+            charCounter.textContent = "0 / 280";
+            charCounter.className = "char-counter";
+
             const formData = new FormData();
             formData.append("idea_text", text);
 
@@ -514,15 +520,15 @@
                     return r.json();
                 })
                 .then(() => {
-                    ideaInput.value = "";
-                    charCounter.textContent = "0 / 280";
-                    charCounter.className = "char-counter";
                     submitBtn.disabled = false;
                     fetchEntries();
                 })
                 .catch(err => {
                     alert("Could not submit idea. The jam may have ended.");
                     submitBtn.disabled = false;
+                    // Restore text if failed
+                    ideaInput.value = text;
+                    charCounter.textContent = `${text.length} / 280`;
                 });
         };
 
