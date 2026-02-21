@@ -5,7 +5,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status, BackgroundTasks
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -213,7 +213,7 @@ async def team_detail(
     if current_user:
         for mem, _ in members:
             if mem.user_id == current_user.id:
-                user_role = mem.role.value
+                user_role = getattr(mem.role, 'value', mem.role)
                 break
 
     # ━━━ Pending Peer Evaluations logic ━━━
@@ -660,7 +660,7 @@ async def create_repo(
         )
     )
     membership = mem_result.scalar_one_or_none()
-    if not membership or membership.role.value != "Lead":
+    if not membership or getattr(membership.role, 'value', membership.role) != "Lead":
         raise HTTPException(status_code=403, detail="Only the team lead can create a repo")
 
     # Verify no repo exists yet
