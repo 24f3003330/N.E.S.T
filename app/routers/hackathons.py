@@ -141,7 +141,7 @@ async def list_hackathons(
     db: AsyncSession = Depends(get_db),
 ):
     """Redirect to dashboard."""
-    return RedirectResponse(url="/hackathons/dashboard", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(url="/hackathons/dashboard?success=Hackathon+created+successfully", status_code=status.HTTP_303_SEE_OTHER)
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -403,4 +403,4 @@ async def post_unstop_participate(
 
     await db.commit()
 
-    return RedirectResponse(url=f"/teams/{team.id}", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(url=f"/teams/{team.id}?success=Project+created+and+team+formed", status_code=status.HTTP_303_SEE_OTHER)

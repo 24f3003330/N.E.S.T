@@ -119,7 +119,7 @@ async def get_current_user(
 @router.get("/logout")
 async def logout():
     """Clear the auth cookie and redirect to homepage."""
-    response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    response = RedirectResponse(url="/?success=Logged+out+successfully", status_code=status.HTTP_303_SEE_OTHER)
     response.delete_cookie(COOKIE_KEY)
     return response
 
@@ -275,7 +275,7 @@ async def oauth_callback(
     await db.flush()
     await db.refresh(user)
 
-    response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    response = RedirectResponse(url="/?success=Account+created+successfully", status_code=status.HTTP_303_SEE_OTHER)
     return _set_auth_cookie(response, user.id)
 
 
@@ -286,6 +286,6 @@ async def oauth_callback(
 @router.get("/logout")
 async def logout():
     """Clear the auth cookie and redirect to the landing page."""
-    response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    response = RedirectResponse(url="/?success=Logged+out+successfully", status_code=status.HTTP_303_SEE_OTHER)
     response.delete_cookie(key=COOKIE_KEY)
     return response

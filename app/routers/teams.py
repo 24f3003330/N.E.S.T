@@ -131,7 +131,7 @@ async def create_team(
     db.add(chat_room)
 
     await db.commit()
-    return RedirectResponse(url=f"/teams/{team.id}", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(url=f"/teams/{team.id}?success=Team+created+successfully", status_code=status.HTTP_303_SEE_OTHER)
 
 
 @router.get("/{team_id}", response_class=HTMLResponse)
@@ -303,7 +303,7 @@ async def invite_member(
         message=message
     )
     
-    return RedirectResponse(url=f"/teams/{team_id}", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(url=f"/teams/{team_id}?success=Invitation+sent+successfully", status_code=status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/request/{team_id}")
@@ -353,7 +353,7 @@ async def request_to_join(
             message=message
         )
         
-    return RedirectResponse(url=f"/teams/{team_id}", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(url=f"/teams/{team_id}?success=Join+request+sent+successfully", status_code=status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/invitation/{inv_id}/respond")
@@ -458,7 +458,7 @@ async def respond_invitation(
             await db.rollback()
             raise HTTPException(status_code=500, detail=f"Database error during decline: {str(e)}")
 
-    return RedirectResponse(url=f"/teams/{inv.team_id}", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(url=f"/teams/{inv.team_id}?success=Response+submitted+successfully", status_code=status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/{team_id}/leave")
@@ -484,7 +484,7 @@ async def leave_team(
         membership.left_at = datetime.now(timezone.utc)
         await db.commit()
 
-    return RedirectResponse(url="/hackathons/dashboard", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(url="/hackathons/dashboard?success=You+have+left+the+team", status_code=status.HTTP_303_SEE_OTHER)
 
 @router.post("/{team_id}/lock")
 async def lock_team(
@@ -665,7 +665,7 @@ async def create_repo(
 
     # Verify no repo exists yet
     if team.github_repo_url:
-        return RedirectResponse(url=f"/teams/{team_id}", status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(url=f"/teams/{team_id}?success=Rating+submitted+successfully", status_code=status.HTTP_303_SEE_OTHER)
 
     # Verify minimum 2 members
     count_result = await db.execute(
@@ -740,4 +740,4 @@ async def create_repo(
         except Exception:
             pass  # WebSocket broadcast is best-effort
 
-    return RedirectResponse(url=f"/teams/{team_id}", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(url=f"/teams/{team_id}?success=GitHub+repo+created+successfully", status_code=status.HTTP_303_SEE_OTHER)

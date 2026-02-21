@@ -112,7 +112,7 @@ async def start_jam(
         err = traceback.format_exc()
         raise HTTPException(status_code=500, detail=f"IdeaJam Start Error: {str(e)}\n\n{err}")
 
-    return RedirectResponse(url=f"/ideajam/{jam.id}", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(url=f"/ideajam/{jam.id}?success=Idea+Jam+started", status_code=status.HTTP_303_SEE_OTHER)
 
 
 # ═══════════════════════════════════════════════════════════════
