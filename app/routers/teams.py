@@ -505,7 +505,7 @@ async def lock_team(
     team.status = TeamStatus.Active
     await db.commit()
     
-    return RedirectResponse(url=f"/teams/{team_id}", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(url=f"/teams/{team_id}?success=Team+locked+successfully", status_code=status.HTTP_303_SEE_OTHER)
 
 @router.post("/{team_id}/delete")
 async def delete_team(
@@ -548,7 +548,7 @@ async def delete_team(
     await db.commit()
     
     return RedirectResponse(
-        url=f"/teams/{team_id}?success=Team+locked", status_code=status.HTTP_303_SEE_OTHER
+        url=f"/teams?success=Team+dissolved+successfully", status_code=status.HTTP_303_SEE_OTHER
     )
 
 

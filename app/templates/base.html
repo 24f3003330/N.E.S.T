@@ -116,6 +116,12 @@
 
     <!-- ═══ Messages ═══ -->
     <div class="container mt-3">
+        <!-- Global success banner from ?success= query param -->
+        <div id="global-success-banner" class="alert alert-success alert-dismissible fade show d-none" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span id="global-success-text"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
         {% block messages %}{% endblock %}
     </div>
 
@@ -141,6 +147,30 @@
     <script src="/static/js/main.js"></script>
 
     {% block extra_scripts %}{% endblock %}
+
+    <!-- Global success message handler -->
+    <script>
+        (function () {
+            const params = new URLSearchParams(window.location.search);
+            const msg = params.get('success');
+            if (msg) {
+                const banner = document.getElementById('global-success-banner');
+                const text = document.getElementById('global-success-text');
+                if (banner && text) {
+                    text.textContent = msg;
+                    banner.classList.remove('d-none');
+                    // Auto-dismiss after 4 seconds
+                    setTimeout(function () {
+                        banner.classList.add('d-none');
+                    }, 4000);
+                }
+                // Clean URL without reload
+                const url = new URL(window.location);
+                url.searchParams.delete('success');
+                window.history.replaceState({}, '', url);
+            }
+        })();
+    </script>
 
     {% if current_user %}
     <script>
