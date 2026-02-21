@@ -77,6 +77,71 @@ from app.models.team import Team
 from app.models.user import User
 from app.routers.auth import get_current_user
 
+@app.get("/dev/seed-hackathons")
+async def dev_seed_hackathons(db: AsyncSession = Depends(get_db)):
+    import json
+    from datetime import datetime, timedelta, timezone
+    
+    # Get any user to be the creator
+    result = await db.execute(select(User).limit(1))
+    user = result.scalar_one_or_none()
+    
+    if not user:
+        return {"status": "error", "detail": "No users found in the database. Please register a user first."}
+
+    now = datetime.now(timezone.utc)
+
+    hackathons = [
+        Hackathon(
+            title="Global AI Challenge 2026",
+            description="Build the next generation of LLM applications to solve real-world problems. Focus areas include healthcare, education, and climate tech.",
+            organizer="OpenAI & Microsoft",
+            created_by=user.id,
+            start_date=now + timedelta(days=5),
+            end_date=now + timedelta(days=7),
+            registration_deadline=now + timedelta(days=3),
+            max_team_size=4,
+            min_team_size=2,
+            required_capabilities_json=json.dumps(["Python", "Machine Learning", "React", "UI/UX Design"]),
+            tags_json=json.dumps(["AI", "Healthcare", "Education"]),
+            status="Upcoming"
+        ),
+        Hackathon(
+            title="Smart Campus IoT Hack",
+            description="Join us to make our university campus smarter, greener, and more connected using IoT devices and data analytics.",
+            organizer="University Tech Board",
+            created_by=user.id,
+            start_date=now - timedelta(days=1),
+            end_date=now + timedelta(days=1),
+            registration_deadline=now - timedelta(days=2),
+            max_team_size=5,
+            min_team_size=3,
+            required_capabilities_json=json.dumps(["C++", "Python", "Data Analysis", "Project Management"]),
+            tags_json=json.dumps(["IoT", "Smart Campus", "Green Tech"]),
+            status="Active"
+        ),
+        Hackathon(
+            title="FinTech Disruptors Buildathon",
+            description="Redefine the future of finance. Build decentralized applications, payment gateways, and innovative banking solutions.",
+            organizer="Stripe & Plaid",
+            created_by=user.id,
+            start_date=now - timedelta(days=10),
+            end_date=now - timedelta(days=8),
+            registration_deadline=now - timedelta(days=12),
+            max_team_size=4,
+            min_team_size=1,
+            required_capabilities_json=json.dumps(["Solidity", "Node.js", "Financial Modeling", "Figma"]),
+            tags_json=json.dumps(["FinTech", "Web3", "Blockchain"]),
+            status="Completed"
+        )
+    ]
+
+    for h in hackathons:
+        db.add(h)
+    
+    await db.commit()
+    return {"status": "success", "detail": "Successfully seeded 3 mock hackathons (1 Upcoming, 1 Active, 1 Completed)."}
+
 
 # ── Landing page ──
 @app.get("/")
