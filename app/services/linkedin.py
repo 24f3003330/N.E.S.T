@@ -26,9 +26,9 @@ def extract_linkedin_profile(url: str, name: str = "") -> Dict[str, Any]:
     skills = []
     if "tech" in seed_lower or "dev" in seed_lower or len(seed_str) % 2 == 0:
         skills.extend(["Python", "JavaScript", "React", "Cloud Computing"])
-    if "design" in url_lower or "art" in url_lower or len(url) % 3 == 0:
+    if "design" in seed_lower or "art" in seed_lower or len(seed_str) % 3 == 0:
         skills.extend(["UI/UX Design", "Figma", "User Research"])
-    if "manage" in url_lower or "lead" in url_lower or len(url) % 5 == 0:
+    if "manage" in seed_lower or "lead" in seed_lower or len(seed_str) % 5 == 0:
         skills.extend(["Project Management", "Agile", "Strategy"])
     
     if not skills:
