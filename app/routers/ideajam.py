@@ -83,6 +83,27 @@ async def start_jam(
         db.add(jam)
         await db.commit()
         await db.refresh(jam)
+        
+        # Notify other team members
+        members_res = await db.execute(
+            select(TeamMembership.user_id)
+            .where(
+                TeamMembership.team_id == team_id,
+                TeamMembership.left_at.is_(None),
+                TeamMembership.user_id != current_user.id
+            )
+        )
+        member_ids = members_res.scalars().all()
+        if member_ids:
+            from app.models.notification import Notification
+            for m_id in member_ids:
+                notif = Notification(
+                    user_id=m_id,
+                    message=f"💡 <b>{current_user.full_name}</b> started an Idea Jam for team <b>{team.name}</b>! Join now.",
+                    link=f"/ideajam/{jam.id}",
+                )
+                db.add(notif)
+            await db.commit()
     except Exception as e:
         import traceback
         err = traceback.format_exc()
