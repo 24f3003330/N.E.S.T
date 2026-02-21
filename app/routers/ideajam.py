@@ -45,6 +45,7 @@ async def start_jam(
     team_id: int,
     current_user: Optional[User] = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
+    duration: int = Form(default=10),
 ):
     try:
         if not current_user:
@@ -72,12 +73,14 @@ async def start_jam(
             return RedirectResponse(url=f"/ideajam/{existing.id}", status_code=status.HTTP_303_SEE_OTHER)
 
         # Create jam
+        allowed_durations = {2, 5, 10, 20}
+        jam_minutes = duration if duration in allowed_durations else JAM_DURATION_MINUTES
         now = datetime.now(timezone.utc)
         jam = IdeaJam(
             team_id=team_id,
             started_by=current_user.id,
             started_at=now,
-            ends_at=now + timedelta(minutes=JAM_DURATION_MINUTES),
+            ends_at=now + timedelta(minutes=jam_minutes),
             status=JamStatus.Active,
         )
         db.add(jam)
