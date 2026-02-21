@@ -242,17 +242,42 @@
     <div id="exportSection" class="text-center mt-4 d-none">
 
         {% if current_user.id == team.lead_id %}
-        <div class="mb-4 p-3 border border-primary border-opacity-25 rounded">
-            <h6 class="fw-bold mb-2 text-primary"><i class="bi bi-shield-lock me-2"></i>Finalize Team</h6>
-            <p class="small text-secondary mb-3">Review the ideas above. Once everyone has completed the survey, click
-                below to form your final team. Mismatched members will be removed and the team will be locked for the
-                hackathon.</p>
-            <form action="/ideajam/{{ jam.id }}/finalize-team" method="POST" class="d-inline">
-                <button type="submit" class="btn btn-primary"
-                    onclick="return confirm('Are you sure you want to finalize the team? This will lock the roster and remove any members based on survey responses.');">
-                    <i class="bi bi-check-circle-fill me-1"></i>Finalize Team & Lock
-                </button>
-            </form>
+        <div class="mb-4 p-4 border border-primary border-opacity-25 rounded">
+            <h6 class="fw-bold mb-3 text-primary"><i class="bi bi-shield-lock me-2"></i>Team Lead Actions</h6>
+            <p class="small text-secondary mb-3">Review the ideas above, then choose an action for your team.</p>
+
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <!-- Lock Team -->
+                <form action="/teams/{{ team.id }}/lock" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-success"
+                        onclick="return confirm('Lock the team? This sets the team to Active and stops new members from joining.');">
+                        <i class="bi bi-lock-fill me-1"></i>Lock Team
+                    </button>
+                </form>
+
+                <!-- Finalize Team (from survey) -->
+                <form action="/ideajam/{{ jam.id }}/finalize-team" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-primary"
+                        onclick="return confirm('Finalize the team? This will lock the roster and remove mismatched members based on survey results.');">
+                        <i class="bi bi-check-circle-fill me-1"></i>Finalize & Lock
+                    </button>
+                </form>
+
+                <!-- Dissolve Team -->
+                <form action="/teams/{{ team.id }}/delete" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-danger"
+                        onclick="return confirm('⚠️ Dissolve the team? This will permanently delete the team, all chat history, and memberships. This cannot be undone!');">
+                        <i class="bi bi-trash3-fill me-1"></i>Dissolve Team
+                    </button>
+                </form>
+            </div>
+
+            <div class="small text-secondary">
+                <i class="bi bi-info-circle me-1"></i>
+                <strong>Lock</strong> — Sets team to Active, no new members can join.
+                <strong>Finalize</strong> — Removes mismatched members from survey, then locks.
+                <strong>Dissolve</strong> — Permanently deletes the team.
+            </div>
         </div>
         {% endif %}
 
