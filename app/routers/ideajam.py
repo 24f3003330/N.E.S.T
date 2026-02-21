@@ -1,6 +1,6 @@
 """Idea Jam router — timed 10-minute brainstorming sessions."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
@@ -72,7 +72,7 @@ async def start_jam(
             return RedirectResponse(url=f"/ideajam/{existing.id}", status_code=status.HTTP_303_SEE_OTHER)
 
         # Create jam
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         jam = IdeaJam(
             team_id=team_id,
             started_by=current_user.id,
@@ -112,7 +112,7 @@ async def jam_page(
             raise HTTPException(status_code=404, detail="Idea Jam not found")
 
         # Auto-complete if time is up
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         status_val = getattr(jam.status, 'value', jam.status)
         if status_val == "Active" and now >= jam.ends_at:
             jam.status = JamStatus.Completed
@@ -182,7 +182,7 @@ async def get_entries(
             raise HTTPException(status_code=404, detail="Jam not found")
 
         # Auto-complete if expired
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         status_val = getattr(jam.status, 'value', jam.status)
         is_active = status_val == "Active" and now < jam.ends_at
         if status_val == "Active" and now >= jam.ends_at:
@@ -233,7 +233,7 @@ async def submit_idea(
         raise HTTPException(status_code=404, detail="Jam not found")
 
     # Check jam is still active
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     status_val = getattr(jam.status, 'value', jam.status)
     if status_val != "Active" or now >= jam.ends_at:
         raise HTTPException(status_code=400, detail="This Idea Jam has ended")
