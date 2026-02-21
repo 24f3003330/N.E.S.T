@@ -259,7 +259,7 @@
 
                     <!-- Create Repo Button -->
                     <form action="/teams/{{ team.id }}/create-repo" method="POST">
-                        <button type="submit" class="btn btn-outline-light w-100" {% if not ns.all_set %}disabled{%
+                        <button type="submit" class="btn btn-outline-primary w-100" {% if not ns.all_set %}disabled{%
                             endif %}>
                             <i class="bi bi-plus-circle me-2"></i>Create Repository
                         </button>
