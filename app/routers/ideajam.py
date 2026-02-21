@@ -46,42 +46,47 @@ async def start_jam(
     current_user: Optional[User] = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if not current_user:
-        return RedirectResponse(url="/auth/login", status_code=status.HTTP_303_SEE_OTHER)
+    try:
+        if not current_user:
+            return RedirectResponse(url="/auth/login", status_code=status.HTTP_303_SEE_OTHER)
 
-    # Check team exists
-    team_result = await db.execute(select(Team).where(Team.id == team_id))
-    team = team_result.scalar_one_or_none()
-    if not team:
-        raise HTTPException(status_code=404, detail="Team not found")
+        # Check team exists
+        team_result = await db.execute(select(Team).where(Team.id == team_id))
+        team = team_result.scalar_one_or_none()
+        if not team:
+            raise HTTPException(status_code=404, detail="Team not found")
 
-    # Check user is a member
-    if not await _check_team_member(db, current_user.id, team_id):
-        raise HTTPException(status_code=403, detail="You are not a member of this team")
+        # Check user is a member
+        if not await _check_team_member(db, current_user.id, team_id):
+            raise HTTPException(status_code=403, detail="You are not a member of this team")
 
-    # Check no active jam already exists
-    active_result = await db.execute(
-        select(IdeaJam).where(
-            IdeaJam.team_id == team_id,
-            IdeaJam.status == JamStatus.Active,
+        # Check no active jam already exists
+        active_result = await db.execute(
+            select(IdeaJam).where(
+                IdeaJam.team_id == team_id,
+                IdeaJam.status == JamStatus.Active,
+            )
         )
-    )
-    existing = active_result.scalar_one_or_none()
-    if existing:
-        return RedirectResponse(url=f"/ideajam/{existing.id}", status_code=status.HTTP_303_SEE_OTHER)
+        existing = active_result.scalar_one_or_none()
+        if existing:
+            return RedirectResponse(url=f"/ideajam/{existing.id}", status_code=status.HTTP_303_SEE_OTHER)
 
-    # Create jam
-    now = datetime.utcnow()
-    jam = IdeaJam(
-        team_id=team_id,
-        started_by=current_user.id,
-        started_at=now,
-        ends_at=now + timedelta(minutes=JAM_DURATION_MINUTES),
-        status=JamStatus.Active,
-    )
-    db.add(jam)
-    await db.commit()
-    await db.refresh(jam)
+        # Create jam
+        now = datetime.utcnow()
+        jam = IdeaJam(
+            team_id=team_id,
+            started_by=current_user.id,
+            started_at=now,
+            ends_at=now + timedelta(minutes=JAM_DURATION_MINUTES),
+            status=JamStatus.Active,
+        )
+        db.add(jam)
+        await db.commit()
+        await db.refresh(jam)
+    except Exception as e:
+        import traceback
+        err = traceback.format_exc()
+        raise HTTPException(status_code=500, detail=f"IdeaJam Start Error: {str(e)}\n\n{err}")
 
     return RedirectResponse(url=f"/ideajam/{jam.id}", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -97,63 +102,68 @@ async def jam_page(
     current_user: Optional[User] = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if not current_user:
-        return RedirectResponse(url="/auth/login", status_code=status.HTTP_303_SEE_OTHER)
+    try:
+        if not current_user:
+            return RedirectResponse(url="/auth/login", status_code=status.HTTP_303_SEE_OTHER)
 
-    jam_result = await db.execute(select(IdeaJam).where(IdeaJam.id == jam_id))
-    jam = jam_result.scalar_one_or_none()
-    if not jam:
-        raise HTTPException(status_code=404, detail="Idea Jam not found")
+        jam_result = await db.execute(select(IdeaJam).where(IdeaJam.id == jam_id))
+        jam = jam_result.scalar_one_or_none()
+        if not jam:
+            raise HTTPException(status_code=404, detail="Idea Jam not found")
 
-    # Auto-complete if time is up
-    now = datetime.utcnow()
-    status_val = getattr(jam.status, 'value', jam.status)
-    if status_val == "Active" and now >= jam.ends_at:
-        jam.status = JamStatus.Completed
-        await db.commit()
+        # Auto-complete if time is up
+        now = datetime.utcnow()
+        status_val = getattr(jam.status, 'value', jam.status)
+        if status_val == "Active" and now >= jam.ends_at:
+            jam.status = JamStatus.Completed
+            await db.commit()
 
-    # Fetch team name
-    team_result = await db.execute(select(Team).where(Team.id == jam.team_id))
-    team = team_result.scalar_one_or_none()
+        # Fetch team name
+        team_result = await db.execute(select(Team).where(Team.id == jam.team_id))
+        team = team_result.scalar_one_or_none()
 
-    # Survey checks
-    has_submitted_survey = False
-    teammates = []
-    status_val = getattr(jam.status, 'value', jam.status)
-    if status_val == "Completed":
-        # Check if already submitted
-        survey_res = await db.execute(select(JamSurvey).where(
-            JamSurvey.jam_id == jam_id,
-            JamSurvey.user_id == current_user.id
-        ))
-        if survey_res.scalar_one_or_none():
-            has_submitted_survey = True
+        # Survey checks
+        has_submitted_survey = False
+        teammates = []
+        status_val = getattr(jam.status, 'value', jam.status)
+        if status_val == "Completed":
+            # Check if already submitted
+            survey_res = await db.execute(select(JamSurvey).where(
+                JamSurvey.jam_id == jam_id,
+                JamSurvey.user_id == current_user.id
+            ))
+            if survey_res.scalar_one_or_none():
+                has_submitted_survey = True
 
-        # Fetch other teammates for the "avoid member" dropdown
-        members_res = await db.execute(
-            select(User)
-            .join(TeamMembership, TeamMembership.user_id == User.id)
-            .where(
-                TeamMembership.team_id == jam.team_id,
-                TeamMembership.left_at.is_(None),
-                User.id != current_user.id
+            # Fetch other teammates for the "avoid member" dropdown
+            members_res = await db.execute(
+                select(User)
+                .join(TeamMembership, TeamMembership.user_id == User.id)
+                .where(
+                    TeamMembership.team_id == jam.team_id,
+                    TeamMembership.left_at.is_(None),
+                    User.id != current_user.id
+                )
             )
-        )
-        teammates = members_res.scalars().all()
+            teammates = members_res.scalars().all()
 
-    return templates.TemplateResponse(
-        "ideajam.html",
-        {
-            "request": request,
-            "current_user": current_user,
-            "jam": jam,
-            "jam_status_str": getattr(jam.status, "value", jam.status),
-            "team": team,
-            "ends_at_iso": jam.ends_at.isoformat() + "Z",
-            "has_submitted_survey": has_submitted_survey,
-            "teammates": teammates,
-        },
-    )
+        return templates.TemplateResponse(
+            "ideajam.html",
+            {
+                "request": request,
+                "current_user": current_user,
+                "jam": jam,
+                "jam_status_str": getattr(jam.status, "value", jam.status),
+                "team": team,
+                "ends_at_iso": jam.ends_at.isoformat() + "Z",
+                "has_submitted_survey": has_submitted_survey,
+                "teammates": teammates,
+            },
+        )
+    except Exception as e:
+        import traceback
+        err = traceback.format_exc()
+        raise HTTPException(status_code=500, detail=f"IdeaJam Load Error: {str(e)}\n\n{err}")
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -165,37 +175,42 @@ async def get_entries(
     jam_id: int,
     db: AsyncSession = Depends(get_db),
 ):
-    jam_result = await db.execute(select(IdeaJam).where(IdeaJam.id == jam_id))
-    jam = jam_result.scalar_one_or_none()
-    if not jam:
-        raise HTTPException(status_code=404, detail="Jam not found")
+    try:
+        jam_result = await db.execute(select(IdeaJam).where(IdeaJam.id == jam_id))
+        jam = jam_result.scalar_one_or_none()
+        if not jam:
+            raise HTTPException(status_code=404, detail="Jam not found")
 
-    # Auto-complete if expired
-    now = datetime.utcnow()
-    status_val = getattr(jam.status, 'value', jam.status)
-    is_active = status_val == "Active" and now < jam.ends_at
-    if status_val == "Active" and now >= jam.ends_at:
-        jam.status = JamStatus.Completed
-        await db.commit()
-        is_active = False
+        # Auto-complete if expired
+        now = datetime.utcnow()
+        status_val = getattr(jam.status, 'value', jam.status)
+        is_active = status_val == "Active" and now < jam.ends_at
+        if status_val == "Active" and now >= jam.ends_at:
+            jam.status = JamStatus.Completed
+            await db.commit()
+            is_active = False
 
-    # Get entries with user names
-    entries_result = await db.execute(
-        select(IdeaJamEntry, User.full_name)
-        .join(User, IdeaJamEntry.user_id == User.id)
-        .where(IdeaJamEntry.jam_id == jam_id)
-        .order_by(IdeaJamEntry.votes.desc(), IdeaJamEntry.id.asc())
-    )
-    entries = []
-    for entry, full_name in entries_result.all():
-        entries.append({
-            "id": entry.id,
-            "user_name": full_name,
-            "idea_text": entry.idea_text,
-            "votes": entry.votes,
-        })
+        # Get entries with user names
+        entries_result = await db.execute(
+            select(IdeaJamEntry, User.full_name)
+            .join(User, IdeaJamEntry.user_id == User.id)
+            .where(IdeaJamEntry.jam_id == jam_id)
+            .order_by(IdeaJamEntry.votes.desc(), IdeaJamEntry.id.asc())
+        )
+        entries = []
+        for entry, full_name in entries_result.all():
+            entries.append({
+                "id": entry.id,
+                "user_name": full_name,
+                "idea_text": entry.idea_text,
+                "votes": entry.votes,
+            })
 
-    return {"entries": entries, "is_active": is_active}
+        return {"entries": entries, "is_active": is_active}
+    except Exception as e:
+        import traceback
+        err = traceback.format_exc()
+        raise HTTPException(status_code=500, detail=f"IdeaJam Entries Error: {str(e)}\n\n{err}")
 
 
 # ═══════════════════════════════════════════════════════════════
