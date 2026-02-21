@@ -288,13 +288,46 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label d-block fw-bold">Is there any member you prefer NOT to work with?</label>
-                    <select class="form-select bg-dark border-secondary" name="avoid_member_id">
-                        <option value="">None (I can work with anyone)</option>
-                        {% for tmate in teammates %}
-                        <option value="{{ tmate.id }}">{{ tmate.full_name }}</option>
+                    <label for="avoid_member_id" class="form-label text-light">Opt-Out: Is there anyone you'd prefer NOT
+                        to
+                        continue working with? (Optional)</label>
+                    <select class="form-select bg-dark text-light border-secondary" id="avoid_member_id"
+                        name="avoid_member_id">
+                        <option value="">No, I'm happy with everyone.</option>
+                        {% for tm in teammates %}
+                        <option value="{{ tm.id }}">{{ tm.full_name }}</option>
                         {% endfor %}
                     </select>
+                    <div class="form-text text-secondary mt-2"><i class="bi bi-info-circle me-1"></i>If you flag
+                        someone, they won't be in your final hackathon team. Your choice is anonymous.</div>
+
+                    {% if teammates|length > 0 %}
+                    <div class="mt-4 p-3 rounded"
+                        style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05);">
+                        <h6 class="text-secondary mb-3"><i class="bi bi-people-fill me-2"></i>Teammate Profiles</h6>
+                        <div class="row g-2">
+                            {% for tm in teammates %}
+                            <div class="col-12 col-md-6">
+                                <div class="p-2 rounded bg-dark border border-secondary border-opacity-25 h-100">
+                                    <div class="fw-bold text-light mb-1">{{ tm.full_name }}</div>
+                                    <div class="small text-muted mb-2"><i class="bi bi-building me-1"></i>{{
+                                        teammate_profiles[tm.id].department }}</div>
+                                    <div>
+                                        {% for cap in teammate_profiles[tm.id].capabilities %}
+                                        <span class="badge bg-secondary bg-opacity-50 text-light me-1 mb-1"
+                                            style="font-size: 0.7rem;">{{ cap }}</span>
+                                        {% endfor %}
+                                        {% if not teammate_profiles[tm.id].capabilities %}
+                                        <span class="text-secondary small fst-italic">No specific skills listed.</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
                 </div>
 
                 <button type="submit" class="btn btn-warning w-100" id="surveySubmitBtn">

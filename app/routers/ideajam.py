@@ -146,6 +146,23 @@ async def jam_page(
                 )
             )
             teammates = members_res.scalars().all()
+            
+            # Fetch basic profile info (caps, sub-department) for review modal
+            for tm in teammates:
+                await db.refresh(tm, ['capabilities'])
+            teammate_profiles = {
+                tm.id: {
+                    "department": tm.department or "Unknown Department",
+                    "capabilities": [c.name for c in tm.capabilities]
+                } for tm in teammates
+            }
+
+        # Safe ISO formatting for offset-aware postgres datetimes
+        iso_str = jam.ends_at.isoformat()
+        if not iso_str.endswith("Z") and not ("+" in iso_str and ":" in iso_str.split("+")[-1]):
+            iso_str += "Z"
+        elif "+00:00" in iso_str:
+            iso_str = iso_str.replace("+00:00", "Z")
 
         return templates.TemplateResponse(
             "ideajam.html",
@@ -155,9 +172,10 @@ async def jam_page(
                 "jam": jam,
                 "jam_status_str": getattr(jam.status, "value", jam.status),
                 "team": team,
-                "ends_at_iso": jam.ends_at.isoformat() + "Z",
+                "ends_at_iso": iso_str,
                 "has_submitted_survey": has_submitted_survey,
                 "teammates": teammates,
+                "teammate_profiles": teammate_profiles if status_val == "Completed" else {},
             },
         )
     except Exception as e:
@@ -317,16 +335,25 @@ async def results_page(
     if survey_res.scalar_one_or_none():
         has_submitted_survey = True
     else:
-        members_res = await db.execute(
-            select(User)
-            .join(TeamMembership, TeamMembership.user_id == User.id)
-            .where(
-                TeamMembership.team_id == jam.team_id,
-                TeamMembership.left_at.is_(None),
-                User.id != current_user.id
+            members_res = await db.execute(
+                select(User)
+                .join(TeamMembership, TeamMembership.user_id == User.id)
+                .where(
+                    TeamMembership.team_id == jam.team_id,
+                    TeamMembership.left_at.is_(None),
+                    User.id != current_user.id
+                )
             )
-        )
-        teammates = members_res.scalars().all()
+            teammates = members_res.scalars().all()
+            
+            for tm in teammates:
+                await db.refresh(tm, ['capabilities'])
+            teammate_profiles = {
+                tm.id: {
+                    "department": tm.department or "Unknown Department",
+                    "capabilities": [c.name for c in tm.capabilities]
+                } for tm in teammates
+            }
 
     entries_result = await db.execute(
         select(IdeaJamEntry, User.full_name)
@@ -342,6 +369,13 @@ async def results_page(
             "idea_text": entry.idea_text,
             "votes": entry.votes,
         })
+            
+    # Safe ISO formatting for offset-aware postgres datetimes
+    iso_str = jam.ends_at.isoformat()
+    if not iso_str.endswith("Z") and not ("+" in iso_str and ":" in iso_str.split("+")[-1]):
+        iso_str += "Z"
+    elif "+00:00" in iso_str:
+        iso_str = iso_str.replace("+00:00", "Z")
 
     return templates.TemplateResponse(
         "ideajam.html",
@@ -351,9 +385,10 @@ async def results_page(
             "jam": jam,
             "jam_status_str": getattr(jam.status, "value", jam.status),
             "team": team,
-            "ends_at_iso": jam.ends_at.isoformat() + "Z",
+            "ends_at_iso": iso_str,
             "has_submitted_survey": has_submitted_survey,
             "teammates": teammates,
+            "teammate_profiles": teammate_profiles if 'teammate_profiles' in locals() else {},
         },
     )
 
