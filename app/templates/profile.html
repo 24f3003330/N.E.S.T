@@ -46,10 +46,12 @@
                 {% endif %}
 
                 <ul class="list-unstyled text-start mt-3 mb-0 small">
+                    {% if user.campus_id %}
                     <li class="mb-2">
                         <i class="bi bi-card-heading text-primary me-2"></i>
                         <strong>Campus ID:</strong> {{ user.campus_id }}
                     </li>
+                    {% endif %}
                     {% if user.department %}
                     <li class="mb-2">
                         <i class="bi bi-building text-primary me-2"></i>

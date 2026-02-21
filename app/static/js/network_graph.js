@@ -49,7 +49,7 @@
                 .attr("x", width / 2)
                 .attr("y", height / 2)
                 .attr("text-anchor", "middle")
-                .attr("fill", "rgba(255,255,255,.4)")
+                .attr("fill", "rgba(0,0,0,.3)")
                 .attr("font-size", "1.2rem")
                 .text("No users found. The network is empty.");
             return;
@@ -112,7 +112,7 @@
         const link = linkGroup.selectAll("line")
             .data(links)
             .join("line")
-            .attr("stroke", "rgba(99, 179, 237, .25)")
+            .attr("stroke", "rgba(13, 148, 136, .35)")
             .attr("stroke-width", d => linkWidth(d.weight))
             .attr("stroke-linecap", "round");
 
@@ -139,8 +139,8 @@
             .attr("r", d => nodeRadius(d.collab_count))
             .attr("fill", d => ARCHETYPE_COLORS[d.archetype] || ARCHETYPE_COLORS.Unknown)
             .attr("fill-opacity", .85)
-            .attr("stroke", "#fff")
-            .attr("stroke-width", 1.5)
+            .attr("stroke", "#e2e8f0")
+            .attr("stroke-width", 2)
             .attr("cursor", "pointer");
 
         // Labels (only for high-collab users to avoid clutter)
@@ -148,7 +148,7 @@
             .text(d => d.name.split(" ")[0])
             .attr("dy", d => nodeRadius(d.collab_count) + 14)
             .attr("text-anchor", "middle")
-            .attr("fill", "rgba(255,255,255,.6)")
+            .attr("fill", "rgba(0,0,0,.5)")
             .attr("font-size", "10px")
             .attr("pointer-events", "none");
 
